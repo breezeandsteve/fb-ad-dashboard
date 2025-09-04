@@ -639,6 +639,7 @@
                         ad_archive_id: row.c[0]?.v || '',
                         type: row.c[1]?.v || '',
                         image_url: row.c[2]?.v || '',
+                        media_url: row.c[13]?.v || '',   // ← 新增
                         start_date: row.c[3]?.v || '',
                         page_name: row.c[4]?.v || '',
                         original_feed: row.c[5]?.v || '',
@@ -921,7 +922,10 @@
                     '無預覽內容';
                 
                 previewText = highlightText(previewText, searchTerm);
-                
+
+                // 統一用 media_url，沒有就 fallback 到 image_url
+                const mediaSrc = ad.media_url || ad.image_url || '';
+
                 adCard.innerHTML = `
                     <div class="ad-header">
                         <div>
@@ -936,9 +940,16 @@
                         </button>
                     </div>
                     <div class="ad-content">
-                        ${ad.image_url && ad.type === 'image' ? 
-                            `<img src="${ad.image_url}" alt="廣告圖片" class="ad-image" onerror="this.style.display='none'">` : 
-                            ''}
+                        ${(() => {
+                            if (!mediaSrc) return '';
+                            if (ad.type === 'image') {
+                                return `<img src="${mediaSrc}" alt="廣告圖片" class="ad-image" onerror="this.style.display='none'">`;
+                            }
+                            if (ad.type === 'video') {
+                                return `<video controls class="ad-image"><source src="${mediaSrc}" type="video/mp4"></video>`;
+                            }
+                            return '';
+                        })()}
                         
                         <div class="ad-preview">
                             <div class="ad-preview-text">${previewText}</div>
