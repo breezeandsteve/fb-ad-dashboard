@@ -877,26 +877,14 @@
                 adCard.className = 'ad-card';
                 const adId = `ad-${actualIndex}`;
                 
-const formatDate = (dateStr) => {
-    if (!dateStr || dateStr === 'Invalid Date') return '未知日期';
-    
-    try {
-        // 處理 Google Sheets 的日期格式 "2025-07-25 07:00:00"
-        if (dateStr.includes(' ')) {
-            const [datePart, timePart] = dateStr.split(' ');
-            const [year, month, day] = datePart.split('-');
-            const [hours, minutes] = timePart.split(':');
-            
-            const date = new Date(year, month - 1, day, hours, minutes);
-            return date.toLocaleDateString('zh-HK');
-        }
-        
-        // 處理其他格式
-        const date = new Date(dateStr);
-        return isNaN(date.getTime()) ? '未知日期' : date.toLocaleDateString('zh-HK');
-    } catch {
-        return '未知日期';
-    }
+
+                const formatDate = (dateStr) => {
+                    if (!dateStr) return '未知日期';
+                    try {
+                        return new Date(dateStr).toLocaleDateString('zh-HK');
+                    } catch {
+                        return dateStr;
+                    }
 };
 
                 };
