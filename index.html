@@ -412,6 +412,15 @@
             vertical-align: middle;
         }
         
+        /* 關鍵字高亮樣式 */
+        .highlight {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        
         @media (max-width: 768px) {
             .header {
                 position: relative;
@@ -583,6 +592,14 @@
         const brandFilter = document.getElementById('brandFilter');
         const typeFilter = document.getElementById('typeFilter');
         const searchInput = document.getElementById('searchInput');
+        
+        // 關鍵字高亮函數
+        function highlightText(text, searchTerm) {
+            if (!searchTerm || !text) return text;
+            
+            const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            return text.replace(regex, '<span class="highlight">$1</span>');
+        }
         
         // 重新整理數據
         function refreshData() {
@@ -846,7 +863,7 @@
             }
         }
         
-        // 渲染廣告卡片（支援分頁）
+        // 渲染廣告卡片（支援分頁和關鍵字高亮）
         function renderAds(append = false) {
             if (!append) {
                 adsContainer.innerHTML = '';
@@ -856,6 +873,9 @@
             const startIndex = (currentPage - 1) * ADS_PER_PAGE;
             const endIndex = Math.min(startIndex + ADS_PER_PAGE, filteredAds.length);
             const adsToShow = filteredAds.slice(0, endIndex);
+            
+            // 獲取當前搜尋關鍵字
+            const searchTerm = searchInput.value.trim();
             
             // 更新顯示數量
             resultCount.textContent = `顯示 ${adsToShow.length} / ${filteredAds.length} 個廣告`;
@@ -877,37 +897,35 @@
                 adCard.className = 'ad-card';
                 const adId = `ad-${actualIndex}`;
                 
-const formatDate = (dateStr) => {
-    if (!dateStr) return '未知日期';
-    
-    try {
-        // 檢查是否為 Google Sheets 的 Date(YYYY,MM,DD) 格式
-        const match = dateStr.match(/Date\((\d{4}),(\d{1,2}),(\d{1,2})\)/);
-        if (match) {
-            const year = parseInt(match[1], 10);
-            const month = parseInt(match[2], 10) - 1; // JavaScript 月份從 0 開始
-            const day = parseInt(match[3], 10);
-            return new Date(year, month, day).toLocaleDateString('zh-HK');
-        }
-
-        // 如果不是 Google Sheets 格式，嘗試直接解析
-        return new Date(dateStr).toLocaleDateString('zh-HK');
-    } catch {
-        return dateStr; // 回退顯示原始字串
-    }
-};
-
+                const formatDate = (dateStr) => {
+                    if (!dateStr) return '未知日期';
+                    
+                    try {
+                        const match = dateStr.match(/Date\((\d{4}),(\d{1,2}),(\d{1,2})\)/);
+                        if (match) {
+                            const year = parseInt(match[1], 10);
+                            const month = parseInt(match[2], 10) - 1;
+                            const day = parseInt(match[3], 10);
+                            return new Date(year, month, day).toLocaleDateString('zh-HK');
+                        }
+                        return new Date(dateStr).toLocaleDateString('zh-HK');
+                    } catch {
+                        return dateStr;
+                    }
+                };
                 
-                // 建立預覽文字（前100字）
-                const previewText = ad.original_feed ? 
+                // 建立預覽文字（前100字）並高亮關鍵字
+                let previewText = ad.original_feed ? 
                     ad.original_feed.substring(0, 100) + (ad.original_feed.length > 100 ? '...' : '') : 
                     ad.summary ? ad.summary.substring(0, 100) + (ad.summary.length > 100 ? '...' : '') : 
                     '無預覽內容';
                 
+                previewText = highlightText(previewText, searchTerm);
+                
                 adCard.innerHTML = `
                     <div class="ad-header">
                         <div>
-                            <div class="ad-brand">${ad.page_name || '未知品牌'}</div>
+                            <div class="ad-brand">${highlightText(ad.page_name || '未知品牌', searchTerm)}</div>
                             <div class="ad-meta">
                                 <span class="type-badge type-${ad.type}">${ad.type === 'image' ? '圖片' : '影片'}</span>
                                 <span style="margin-left: 10px;">${formatDate(ad.start_date)}</span>
@@ -930,35 +948,35 @@ const formatDate = (dateStr) => {
                             ${ad.original_title ? `
                             <div class="ad-section">
                                 <h4>原始標題</h4>
-                                <div class="ad-text">${ad.original_title}</div>
+                                <div class="ad-text">${highlightText(ad.original_title, searchTerm)}</div>
                             </div>
                             ` : ''}
                             
                             ${ad.original_feed ? `
                             <div class="ad-section">
                                 <h4>原始內容</h4>
-                                <div class="ad-text">${ad.original_feed}</div>
+                                <div class="ad-text">${highlightText(ad.original_feed, searchTerm)}</div>
                             </div>
                             ` : ''}
                             
                             ${ad.summary ? `
                             <div class="ad-section">
                                 <h4>廣告摘要</h4>
-                                <div class="ad-text">${ad.summary}</div>
+                                <div class="ad-text">${highlightText(ad.summary, searchTerm)}</div>
                             </div>
                             ` : ''}
                             
                             ${ad.rewritten_ad_copy ? `
                             <div class="ad-section">
                                 <h4>重寫文案</h4>
-                                <div class="ad-text">${ad.rewritten_ad_copy}</div>
+                                <div class="ad-text">${highlightText(ad.rewritten_ad_copy, searchTerm)}</div>
                             </div>
                             ` : ''}
                             
                             ${ad.analysis ? `
                             <div class="ad-section">
                                 <h4>策略分析</h4>
-                                <div class="ad-text">${ad.analysis}</div>
+                                <div class="ad-text">${highlightText(ad.analysis, searchTerm)}</div>
                             </div>
                             ` : ''}
                         </div>
