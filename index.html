@@ -877,14 +877,26 @@
                 adCard.className = 'ad-card';
                 const adId = `ad-${actualIndex}`;
                 
-                const formatDate = (dateStr) => {
-                    if (!dateStr) return '未知日期';
-                    try {
-                        return new Date(dateStr).toLocaleDateString('zh-HK');
-                    } catch {
-                        return dateStr;
-                    }
-                };
+const formatDate = (dateStr) => {
+    if (!dateStr) return '未知日期';
+    
+    try {
+        // 檢查是否為 Google Sheets 的 Date(YYYY,MM,DD) 格式
+        const match = dateStr.match(/Date\((\d{4}),(\d{1,2}),(\d{1,2})\)/);
+        if (match) {
+            const year = parseInt(match[1], 10);
+            const month = parseInt(match[2], 10) - 1; // JavaScript 月份從 0 開始
+            const day = parseInt(match[3], 10);
+            return new Date(year, month, day).toLocaleDateString('zh-HK');
+        }
+
+        // 如果不是 Google Sheets 格式，嘗試直接解析
+        return new Date(dateStr).toLocaleDateString('zh-HK');
+    } catch {
+        return dateStr; // 回退顯示原始字串
+    }
+};
+
                 
                 // 建立預覽文字（前100字）
                 const previewText = ad.original_feed ? 
