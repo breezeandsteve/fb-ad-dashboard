@@ -420,6 +420,11 @@
             border-radius: 3px;
             font-weight: bold;
         }
+
+                /* ----- 全螢幕影片自動撐滿 ----- */
+video:-webkit-full-screen{width:100vw !important;height:100vh !important;object-fit:contain}
+video:-moz-full-screen{width:100vw !important;height:100vh !important;object-fit:contain}
+video:fullscreen{width:100vw !important;height:100vh !important;object-fit:contain}
         
         @media (max-width: 768px) {
             .header {
