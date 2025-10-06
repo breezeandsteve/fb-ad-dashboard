@@ -11,6 +11,11 @@
             padding: 0;
             box-sizing: border-box;
         }
+
+.MA-btn {
+    display: none !important;
+}
+
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -275,7 +280,7 @@
         
         .ad-image {
             width: 100%;
-            height: 200px;
+            max-height: 200px;
             object-fit: cover;
             margin-bottom: 15px;
             border-radius: 8px;
@@ -327,6 +332,29 @@
         .expand-btn.expanded .icon {
             transform: rotate(180deg);
         }
+
+      /* 新增 YouTube 按鈕樣式 */
+      .MA-btn {
+          background: linear-gradient(135deg, #FF0000, #CC0000);
+          color: white;
+          border: none;
+          padding: 6px 12px;
+          border-radius: 15px;
+          font-size: 0.8rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+      }
+      
+      .MA-btn:hover {
+          background: linear-gradient(135deg, #CC0000, #990000);
+          color: white;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3);
+      }
         
         .hidden {
             display: none;
@@ -420,6 +448,13 @@
             border-radius: 3px;
             font-weight: bold;
         }
+
+                /* ----- 全螢幕影片自動撐滿 ----- */
+video:-webkit-full-screen{width:100vw !important;height:100vh !important;object-fit:contain}
+video:-moz-full-screen{width:100vw !important;height:100vh !important;object-fit:contain}
+video:fullscreen{width:100vw !important;height:100vh !important;object-fit:contain}
+
+
         
         @media (max-width: 768px) {
             .header {
@@ -529,6 +564,10 @@
                 <button class="expand-all-btn" id="expandAllBtn" onclick="toggleAllAds()">
                     📂 全部展開
                 </button>
+                <a href="https://dashboard.buu-luu.com/ma" target="_blank" class="MA-btn">
+                      ▶️ MA
+                  </a>
+                
             </div>
             
             <div class="results-info" id="resultsInfo">
