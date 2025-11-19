@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-HK" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook 廣告數據戰情室</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Remix Icon -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        dark: {
+                            bg: '#020617', // Slate 950
+                            card: '#0f172a', // Slate 900
+                            border: '#1e293b', // Slate 800
+                        },
+                        accent: {
+                            primary: '#6366f1', // Indigo 500
+                            glow: 'rgba(99, 102, 241, 0.5)',
+                        }
+                    },
+                    animation: {
+                        'spin-slow': 'spin 3s linear infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 自定義滾動條 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #020617;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        
+        /* 隱藏但保留動畫的細節樣式 */
+        .ad-details {
+            transition: max-height 0.4s cubic-bezier(0, 1, 0, 1);
+            max-height: 0;
+            overflow: hidden;
+        }
+        .ad-details.expanded {
+            max-height: 3000px;
+            transition: max-height 0.8s ease-in-out;
+        }
+
+        /* 關鍵字高亮 */
+        .highlight {
+            background-color: rgba(234, 179, 8, 0.2);
+            color: #fde047;
+            padding: 0 4px;
+            border-radius: 4px;
+            font-weight: 600;
+            border: 1px solid rgba(234, 179, 8, 0.4);
+        }
+        
+        /* 影片全螢幕 */
+        video:fullscreen { object-fit: contain; }
+    </style>
+</head>
+<body class="bg-dark-bg text-slate-200 font-sans min-h-screen selection:bg-indigo-500 selection:text-white">
+
+    <!-- 背景光暈裝飾 -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-indigo-900/20 rounded-full blur-[100px]"></div>
+        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-900/20 rounded-full blur-[100px]"></div>
+    </div>
+
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-10 relative z-10">
+            <div class="text-center md:text-left mb-6 md:mb-0">
+                <div class="flex items-center gap-3 justify-center md:justify-start">
+                    <div class="w-3 h-10 bg-indigo-500 rounded-full shadow-[0_0_15px_rgba(99,102,241,0.8)]"></div>
+                    <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-white">
+                        Facebook <span class="text-indigo-400">Ads Insight</span>
+                    </h1>
+                </div>
+                <p class="mt-2 text-slate-400 text-sm tracking-wide uppercase pl-6">美容行業廣告數據分析儀表板</p>
+            </div>
+            
+            <button id="refreshBtn" onclick="refreshData()" 
+                class="group relative inline-flex items-center justify-center px-6 py-3 text-sm font-medium text-white transition-all duration-200 bg-slate-800 border border-slate-700 rounded-full hover:bg-slate-700 hover:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-900">
+                <span class="absolute inset-0 w-full h-full -mt-1 rounded-lg opacity-30 bg-gradient-to-b from-transparent via-transparent to-gray-700"></span>
+                <i class="ri-refresh-line mr-2 group-hover:rotate-180 transition-transform duration-500"></i>
+                重新整理數據
+            </button>
+        </header>
+
+        <!-- Loading State -->
+        <div id="loading" class="flex flex-col items-center justify-center py-20 min-h-[50vh]">
+            <div class="relative w-24 h-24 mb-4">
+                <div class="absolute top-0 left-0 w-full h-full border-4 border-slate-700 rounded-full"></div>
+                <div class="absolute top-0 left-0 w-full h-full border-4 border-indigo-500 rounded-full border-t-transparent animate-spin"></div>
+            </div>
+            <p class="text-indigo-300 animate-pulse tracking-widest text-sm font-semibold">正在同步廣告數據庫...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="error" class="hidden max-w-2xl mx-auto mt-10 p-6 bg-red-900/20 border border-red-800 rounded-xl text-center backdrop-blur-sm">
+            <div class="text-red-500 text-5xl mb-4"><i class="ri-error-warning-fill"></i></div>
+            <h3 class="text-xl font-bold text-red-400 mb-2">數據載入失敗</h3>
+            <p class="text-red-300/80">請檢查 Google Sheets 連結權限或稍後再試。</p>
+        </div>
+
+        <!-- Main Content -->
+        <div id="mainContent" class="hidden space-y-8 animate-fade-in">
+            
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Total Ads -->
+                <div class="bg-dark-card border border-dark-border rounded-2xl p-6 hover:border-indigo-500/30 transition-all duration-300 group hover:shadow-lg hover:shadow-indigo-500/10">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">總廣告數</p>
+                            <h3 class="text-3xl font-bold text-white group-hover:text-indigo-400 transition-colors" id="totalAds">-</h3>
+                        </div>
+                        <div class="p-3 bg-slate-800 rounded-xl text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+                            <i class="ri-stack-line text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Brands -->
+                <div class="bg-dark-card border border-dark-border rounded-2xl p-6 hover:border-emerald-500/30 transition-all duration-300 group hover:shadow-lg hover:shadow-emerald-500/10">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">品牌數量</p>
+                            <h3 class="text-3xl font-bold text-white group-hover:text-emerald-400 transition-colors" id="totalBrands">-</h3>
+                        </div>
+                        <div class="p-3 bg-slate-800 rounded-xl text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                            <i class="ri-store-2-line text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Ads -->
+                <div class="bg-dark-card border border-dark-border rounded-2xl p-6 hover:border-blue-500/30 transition-all duration-300 group hover:shadow-lg hover:shadow-blue-500/10">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">圖片廣告</p>
+                            <h3 class="text-3xl font-bold text-white group-hover:text-blue-400 transition-colors" id="imageAds">-</h3>
+                        </div>
+                        <div class="p-3 bg-slate-800 rounded-xl text-blue-400 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                            <i class="ri-image-line text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Video Ads -->
+                <div class="bg-dark-card border border-dark-border rounded-2xl p-6 hover:border-purple-500/30 transition-all duration-300 group hover:shadow-lg hover:shadow-purple-500/10">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">影片廣告</p>
+                            <h3 class="text-3xl font-bold text-white group-hover:text-purple-400 transition-colors" id="videoAds">-</h3>
+                        </div>
+                        <div class="p-3 bg-slate-800 rounded-xl text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                            <i class="ri-movie-line text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-dark-card border border-dark-border rounded-2xl p-6 shadow-xl">
+                    <h3 class="text-lg font-semibold text-white mb-6 flex items-center">
+                        <i class="ri-pie-chart-2-line mr-2 text-indigo-400"></i>
+                        品牌廣告分佈
+                    </h3>
+                    <div class="relative h-64 w-full">
+                        <canvas id="brandChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-dark-card border border-dark-border rounded-2xl p-6 shadow-xl">
+                    <h3 class="text-lg font-semibold text-white mb-6 flex items-center">
+                        <i class="ri-bar-chart-grouped-line mr-2 text-emerald-400"></i>
+                        廣告類型分佈
+                    </h3>
+                    <div class="relative h-64 w-full">
+                        <canvas id="typeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls Toolbar -->
+            <div class="sticky top-4 z-40 bg-dark-card/80 backdrop-blur-md border border-dark-border/50 rounded-2xl p-4 shadow-2xl flex flex-col lg:flex-row gap-4 items-center justify-between">
+                <div class="flex flex-col sm:flex-row gap-4 w-full lg:w-auto flex-1">
+                    <div class="relative group w-full sm:w-48">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="ri-store-line text-slate-500 group-focus-within:text-indigo-400"></i>
+                        </div>
+                        <select id="brandFilter" class="block w-full pl-10 pr-10 py-2.5 text-sm bg-slate-950 border border-slate-700 rounded-lg text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none transition-shadow">
+                            <option value="">所有品牌</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                            <i class="ri-arrow-down-s-line text-slate-500"></i>
+                        </div>
+                    </div>
+
+                    <div class="relative group w-full sm:w-40">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="ri-filter-3-line text-slate-500 group-focus-within:text-indigo-400"></i>
+                        </div>
+                        <select id="typeFilter" class="block w-full pl-10 pr-10 py-2.5 text-sm bg-slate-950 border border-slate-700 rounded-lg text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none transition-shadow">
+                            <option value="">所有類型</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                            <i class="ri-arrow-down-s-line text-slate-500"></i>
+                        </div>
+                    </div>
+
+                    <div class="relative group w-full flex-1">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="ri-search-line text-slate-500 group-focus-within:text-indigo-400"></i>
+                        </div>
+                        <input type="text" id="searchInput" placeholder="搜尋廣告內容、標題、策略分析..." 
+                            class="block w-full pl-10 pr-4 py-2.5 text-sm bg-slate-950 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow">
+                    </div>
+                </div>
+
+                <div class="flex gap-3 w-full lg:w-auto">
+                    <button id="expandAllBtn" onclick="toggleAllAds()" class="flex-1 lg:flex-none px-5 py-2.5 bg-indigo-600/10 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2">
+                        <i class="ri-expand-up-down-line"></i>
+                        <span>全部展開</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Info -->
+            <div class="flex justify-between items-center text-sm text-slate-400 px-2">
+                <span id="resultCount" class="font-mono text-indigo-400">載入中...</span>
+                <span id="lastUpdate" class="opacity-60"></span>
+            </div>
+
+            <!-- Ads Grid -->
+            <div id="adsContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-10">
+                <!-- Ad Cards will be injected here -->
+            </div>
+
+            <!-- No Results -->
+            <div id="noResults" class="hidden text-center py-20">
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-800/50 mb-4">
+                    <i class="ri-search-eye-line text-4xl text-slate-600"></i>
+                </div>
+                <h3 class="text-xl font-medium text-slate-300 mb-2">找不到符合條件的廣告</h3>
+                <p class="text-slate-500">請嘗試調整您的篩選條件或搜尋關鍵字</p>
+            </div>
+
+            <!-- Load More -->
+            <div id="loadMoreContainer" class="hidden text-center pb-20">
+                <button id="loadMoreBtn" onclick="loadMoreAds()" class="group relative px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-full font-medium transition-all duration-300 border border-slate-700 hover:border-indigo-500 hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span class="flex items-center gap-2">
+                        載入更多廣告
+                        <i class="ri-arrow-down-circle-line text-lg group-hover:translate-y-1 transition-transform"></i>
+                    </span>
+                    <div class="loading-more hidden absolute inset-0 flex items-center justify-center bg-slate-800 rounded-full">
+                        <i class="ri-loader-4-line animate-spin text-xl"></i>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Google Sheets Config
+        const SHEET_ID = '1uN_A_GKIt-0ZGGxSX_4B7L-JlhCpPDX2jx7IHA_iQ4g';
+        const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+        
+        let allAds = [];
+        let filteredAds = [];
+        let brandChart = null;
+        let typeChart = null;
+        let allExpanded = false;
+        let currentPage = 1;
+        const ADS_PER_PAGE = 12;
+
+        // Elements
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const mainContent = document.getElementById('mainContent');
+        const resultCount = document.getElementById('resultCount');
+        const lastUpdate = document.getElementById('lastUpdate');
+        const adsContainer = document.getElementById('adsContainer');
+        const noResults = document.getElementById('noResults');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const expandAllBtn = document.getElementById('expandAllBtn');
+        const loadMoreContainer = document.getElementById('loadMoreContainer');
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        const brandFilter = document.getElementById('brandFilter');
+        const typeFilter = document.getElementById('typeFilter');
+        const searchInput = document.getElementById('searchInput');
+
+        // Chart.js Dark Mode Defaults
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.borderColor = '#1e293b';
+
+        function highlightText(text, searchTerm) {
+            if (!searchTerm || !text) return text;
+            const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            return text.replace(regex, '<span class="highlight">$1</span>');
+        }
+
+        async function refreshData() {
+            refreshBtn.disabled = true;
+            refreshBtn.classList.add('opacity-70');
+            
+            mainContent.classList.add('hidden');
+            error.classList.add('hidden');
+            loading.classList.remove('hidden');
+            
+            currentPage = 1;
+            
+            await loadData();
+            
+            refreshBtn.disabled = false;
+            refreshBtn.classList.remove('opacity-70');
+        }
+
+        async function loadData() {
+            try {
+                const timestamp = new Date().getTime();
+                const response = await fetch(`${SHEET_URL}&timestamp=${timestamp}`);
+                const text = await response.text();
+                const jsonString = text.substring(47).slice(0, -2);
+                const data = JSON.parse(jsonString);
+                
+                if (data.table && data.table.rows) {
+                    allAds = data.table.rows.map(row => ({
+                        ad_archive_id: row.c[0]?.v || '',
+                        type: row.c[1]?.v || '',
+                        media_url: row.c[2]?.v || '',
+                        start_date: row.c[3]?.v || '',
+                        page_name: row.c[4]?.v || '',
+                        original_feed: row.c[5]?.v || '',
+                        original_title: row.c[6]?.v || '',
+                        original_description: row.c[7]?.v || '',
+                        summary: row.c[8]?.v || '',
+                        rewritten_ad_copy: row.c[9]?.v || '',
+                        image_prompt: row.c[10]?.v || '',
+                        video_prompt: row.c[11]?.v || '',
+                        analysis: row.c[12]?.v || ''
+                    }));
+                    
+                    calculateStats();
+                    setupFilters();
+                    initializeCharts();
+                    
+                    filteredAds = [...allAds];
+                    renderAds();
+                    
+                    if (!window.eventsInitialized) {
+                        bindEventListeners();
+                        window.eventsInitialized = true;
+                    }
+                    
+                    loading.classList.add('hidden');
+                    mainContent.classList.remove('hidden');
+                    lastUpdate.textContent = `更新於: ${new Date().toLocaleTimeString('zh-HK')}`;
+                }
+            } catch (err) {
+                console.error(err);
+                loading.classList.add('hidden');
+                error.classList.remove('hidden');
+            }
+        }
+
+        function loadMoreAds() {
+            if (currentPage * ADS_PER_PAGE >= filteredAds.length) return;
+            
+            loadMoreBtn.disabled = true;
+            loadMoreBtn.querySelector('.loading-more').classList.remove('hidden');
+            
+            setTimeout(() => {
+                currentPage++;
+                renderAds(true);
+                loadMoreBtn.disabled = false;
+                loadMoreBtn.querySelector('.loading-more').classList.add('hidden');
+            }, 500);
+        }
+
+        function calculateStats() {
+            const stats = {
+                totalAds: allAds.length,
+                brands: {},
+                types: { image: 0, video: 0 }
+            };
+            
+            allAds.forEach(ad => {
+                if (ad.page_name) stats.brands[ad.page_name] = (stats.brands[ad.page_name] || 0) + 1;
+                if (ad.type === 'image') stats.types.image++;
+                else if (ad.type === 'video') stats.types.video++;
+            });
+            
+            animateValue('totalAds', 0, stats.totalAds, 1000);
+            animateValue('totalBrands', 0, Object.keys(stats.brands).length, 1000);
+            animateValue('imageAds', 0, stats.types.image, 1000);
+            animateValue('videoAds', 0, stats.types.video, 1000);
+            
+            return stats;
+        }
+
+        function animateValue(id, start, end, duration) {
+            const obj = document.getElementById(id);
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start);
+                if (progress < 1) window.requestAnimationFrame(step);
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        function setupFilters() {
+            const brands = [...new Set(allAds.map(ad => ad.page_name).filter(Boolean))];
+            const types = [...new Set(allAds.map(ad => ad.type).filter(Boolean))];
+            
+            brandFilter.innerHTML = '<option value="">所有品牌</option>';
+            typeFilter.innerHTML = '<option value="">所有類型</option>';
+            
+            brands.forEach(brand => {
+                const option = document.createElement('option');
+                option.value = brand;
+                option.textContent = brand;
+                brandFilter.appendChild(option);
+            });
+            
+            types.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type === 'image' ? '圖片廣告' : '影片廣告';
+                typeFilter.appendChild(option);
+            });
+        }
+
+        function initializeCharts() {
+            const stats = calculateStats();
+            
+            // Brand Chart
+            const brandCtx = document.getElementById('brandChart').getContext('2d');
+            if (brandChart) brandChart.destroy();
+            
+            brandChart = new Chart(brandCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(stats.brands),
+                    datasets: [{
+                        data: Object.values(stats.brands),
+                        backgroundColor: [
+                            '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e',
+                            '#3b82f6', '#06b6d4', '#10b981', '#f59e0b'
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { usePointStyle: true, padding: 20 } }
+                    },
+                    cutout: '75%'
+                }
+            });
+            
+            // Type Chart
+            const typeCtx = document.getElementById('typeChart').getContext('2d');
+            if (typeChart) typeChart.destroy();
+            
+            typeChart = new Chart(typeCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['圖片廣告', '影片廣告'],
+                    datasets: [{
+                        label: '廣告數量',
+                        data: [stats.types.image, stats.types.video],
+                        backgroundColor: ['#3b82f6', '#ec4899'],
+                        borderRadius: 8,
+                        barThickness: 40
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#1e293b' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function toggleAllAds() {
+            allExpanded = !allExpanded;
+            const buttons = document.querySelectorAll('.expand-btn');
+            const details = document.querySelectorAll('.ad-details');
+            const icon = expandAllBtn.querySelector('span');
+            
+            buttons.forEach(btn => {
+                const btnIcon = btn.querySelector('i');
+                if (allExpanded) {
+                    btn.classList.add('bg-indigo-600', 'text-white', 'border-transparent');
+                    btnIcon.className = 'ri-arrow-up-s-line';
+                    btn.querySelector('span').textContent = '收合';
+                } else {
+                    btn.classList.remove('bg-indigo-600', 'text-white', 'border-transparent');
+                    btnIcon.className = 'ri-arrow-down-s-line';
+                    btn.querySelector('span').textContent = '展開';
+                }
+            });
+            
+            details.forEach(detail => {
+                if (allExpanded) detail.classList.add('expanded');
+                else detail.classList.remove('expanded');
+            });
+            
+            icon.textContent = allExpanded ? '全部收合' : '全部展開';
+        }
+
+        function toggleAd(button, adId) {
+            const details = document.getElementById(`details-${adId}`);
+            const isExpanded = details.classList.contains('expanded');
+            const icon = button.querySelector('i');
+            const text = button.querySelector('span');
+            
+            if (isExpanded) {
+                details.classList.remove('expanded');
+                button.classList.remove('bg-indigo-600', 'text-white', 'border-transparent');
+                icon.className = 'ri-arrow-down-s-line';
+                text.textContent = '展開';
+            } else {
+                details.classList.add('expanded');
+                button.classList.add('bg-indigo-600', 'text-white', 'border-transparent');
+                icon.className = 'ri-arrow-up-s-line';
+                text.textContent = '收合';
+            }
+        }
+
+        function renderAds(append = false) {
+            if (!append) {
+                adsContainer.innerHTML = '';
+                currentPage = 1;
+            }
+            
+            const startIndex = (currentPage - 1) * ADS_PER_PAGE;
+            const endIndex = Math.min(startIndex + ADS_PER_PAGE, filteredAds.length);
+            const adsToShow = filteredAds.slice(0, endIndex);
+            const searchTerm = searchInput.value.trim();
+            
+            resultCount.textContent = `顯示 ${Math.min(currentPage * ADS_PER_PAGE, filteredAds.length)} / ${filteredAds.length} 個廣告`;
+            
+            if (filteredAds.length === 0) {
+                noResults.classList.remove('hidden');
+                loadMoreContainer.classList.add('hidden');
+                return;
+            }
+            
+            noResults.classList.add('hidden');
+            const newAds = append ? filteredAds.slice(startIndex, endIndex) : adsToShow;
+            
+            newAds.forEach((ad, index) => {
+                const actualIndex = append ? startIndex + index : index;
+                const adId = `ad-${actualIndex}`;
+                
+                const formatDate = (dateStr) => {
+                    if (!dateStr) return 'N/A';
+                    try {
+                        const match = dateStr.match(/Date\((\d{4}),(\d{1,2}),(\d{1,2})\)/);
+                        if (match) return new Date(parseInt(match[1]), parseInt(match[2])-1, parseInt(match[3])).toLocaleDateString('zh-HK');
+                        return new Date(dateStr).toLocaleDateString('zh-HK');
+                    } catch { return dateStr; }
+                };
+
+                let previewText = ad.original_feed ? 
+                    ad.original_feed.substring(0, 100) + (ad.original_feed.length > 100 ? '...' : '') : 
+                    ad.summary ? ad.summary.substring(0, 100) + (ad.summary.length > 100 ? '...' : '') : '';
+                
+                previewText = highlightText(previewText, searchTerm);
+
+                const card = document.createElement('div');
+                card.className = 'bg-dark-card border border-dark-border rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-500/30 flex flex-col';
+                
+                card.innerHTML = `
+                    <div class="p-5 border-b border-dark-border flex justify-between items-start bg-gradient-to-r from-slate-900 to-slate-800">
+                        <div>
+                            <div class="font-bold text-lg text-white mb-1 tracking-tight">${highlightText(ad.page_name || '未知品牌', searchTerm)}</div>
+                            <div class="flex items-center gap-2 text-xs font-mono">
+                                <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">${formatDate(ad.start_date)}</span>
+                                <span class="px-2 py-0.5 rounded ${ad.type === 'image' ? 'bg-blue-900/30 text-blue-400 border-blue-800' : 'bg-pink-900/30 text-pink-400 border-pink-800'} border">
+                                    ${ad.type === 'image' ? '<i class="ri-image-fill mr-1"></i>圖片' : '<i class="ri-movie-fill mr-1"></i>影片'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="relative group bg-black aspect-video flex items-center justify-center overflow-hidden">
+                        ${ad.media_url ? (ad.type === 'image' ? 
+                            `<img src="${ad.media_url}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" onerror="this.style.display='none'">` : 
+                            `<video controls class="w-full h-full max-h-[300px] object-contain"><source src="${ad.media_url}" type="video/mp4"></video>`
+                        ) : '<div class="text-slate-600 text-sm">無媒體內容</div>'}
+                    </div>
+
+                    <div class="p-5 flex-1 flex flex-col">
+                        <div class="text-slate-400 text-sm leading-relaxed mb-4 flex-1">${previewText}</div>
+                        
+                        <div class="ad-details space-y-4 text-sm text-slate-300" id="details-${adId}">
+                            ${[
+                                { title: '原始標題', content: ad.original_title, icon: 'ri-text' },
+                                { title: '原始內容', content: ad.original_feed, icon: 'ri-article-line' },
+                                { title: '廣告摘要', content: ad.summary, icon: 'ri-file-list-2-line' },
+                                { title: '重寫文案', content: ad.rewritten_ad_copy, icon: 'ri-edit-line', color: 'text-emerald-400' },
+                                { title: '策略分析', content: ad.analysis, icon: 'ri-bar-chart-box-line', color: 'text-indigo-400' }
+                            ].map(item => item.content ? `
+                                <div class="bg-slate-950/50 rounded-lg p-4 border border-dark-border">
+                                    <h4 class="text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2 ${item.color || 'text-slate-500'}">
+                                        <i class="${item.icon}"></i> ${item.title}
+                                    </h4>
+                                    <div class="leading-relaxed whitespace-pre-line">${highlightText(item.content, searchTerm)}</div>
+                                </div>
+                            ` : '').join('')}
+                        </div>
+
+                        <button class="expand-btn w-full mt-4 py-2 rounded-lg border border-slate-700 text-slate-400 text-sm hover:bg-slate-800 hover:text-white transition-all duration-200 flex items-center justify-center gap-1" onclick="toggleAd(this, '${adId}')">
+                            <i class="ri-arrow-down-s-line"></i>
+                            <span>展開</span>
+                        </button>
+                    </div>
+                `;
+                adsContainer.appendChild(card);
+            });
+            
+            loadMoreContainer.classList.toggle('hidden', endIndex >= filteredAds.length);
+        }
+
+        function filterAds() {
+            filteredAds = allAds.filter(ad => {
+                const brandMatch = !brandFilter.value || ad.page_name === brandFilter.value;
+                const typeMatch = !typeFilter.value || ad.type === typeFilter.value;
+                const term = searchInput.value.toLowerCase().trim();
+                const searchMatch = !term || [
+                    ad.original_title, ad.original_feed, ad.summary, 
+                    ad.analysis, ad.rewritten_ad_copy, ad.page_name
+                ].some(field => field?.toLowerCase().includes(term));
+                
+                return brandMatch && typeMatch && searchMatch;
+            });
+            
+            allExpanded = false;
+            expandAllBtn.querySelector('span').textContent = '全部展開';
+            renderAds();
+        }
+
+        function bindEventListeners() {
+            brandFilter.addEventListener('change', filterAds);
+            typeFilter.addEventListener('change', filterAds);
+            searchInput.addEventListener('input', filterAds);
+        }
+
+        // Auto Refresh every 10 mins
+        setInterval(() => { loadData(); }, 10 * 60 * 1000);
+        
+        // Init
+        loadData();
+    </script>
+</body>
+</html>
