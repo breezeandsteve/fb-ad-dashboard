@@ -312,7 +312,7 @@
                     allAds = data.table.rows.map(row => ({
                         ad_archive_id: row.c[0]?.v || '',
                         type: row.c[1]?.v || 'image',
-                        media_url: row.c[14]?.v || '',
+                        media_url: row.c[2]?.v || '',
                         start_date: row.c[3]?.v || '',
                         page_name: row.c[4]?.v || 'Unknown',
                         original_feed: row.c[5]?.v || '',
