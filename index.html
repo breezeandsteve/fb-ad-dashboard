@@ -141,7 +141,7 @@
         <div id="error" class="hidden max-w-2xl mx-auto mt-10 p-6 bg-red-900/20 border border-red-800 rounded-xl text-center backdrop-blur-sm">
             <div class="text-red-500 text-5xl mb-4"><i class="ri-error-warning-fill"></i></div>
             <h3 class="text-xl font-bold text-red-400 mb-2">數據載入失敗</h3>
-            <p id="errorMessage" class="text-red-300/80">請檢查您的 Page ID 是否正確，或確認 Cloudflare Worker 是否已更新 Sheet ID。</p>
+            <p id="errorMessage" class="text-red-300/80">請檢查您的 Page ID 是否正確。</p>
         </div>
 
         <!-- Main Content -->
@@ -236,9 +236,8 @@
         // ==========================================
         // ⚠️ 配置區域
         // ==========================================
+        // 請將下方網址替換為您的 Cloudflare Worker 網址
         const WORKER_ENDPOINT = 'https://ads-data-proxy.stevetsangpm.workers.dev';
-        // ⚠️ 提醒：請務必在 Cloudflare Worker 中更新 Sheet ID 為：
-        // 1w4XHqGOqKwZKA22nfbBPk2mg_MyH91xmhzY0MRqQTmM
         // ==========================================
         
         let allAds = [], filteredAds = [];
@@ -297,45 +296,31 @@
 
         async function loadData() {
             try {
-                // 呼叫 Worker，Worker 會去抓取新的 Google Sheet 數據
+                if (WORKER_ENDPOINT.includes('YOUR_WORKER_NAME')) throw new Error('請先設定 JavaScript 中的 Cloudflare Worker 網址');
+                
                 const response = await fetch(`${WORKER_ENDPOINT}?brand=${currentBrandKey}`);
                 if (!response.ok) {
                     const errData = await response.json().catch(() => ({}));
-                    throw new Error(errData.error || `查無數據或 Worker 配置錯誤`);
+                    throw new Error(errData.error || `查無 Page ID: ${currentBrandKey}`);
                 }
 
-                // 處理 Google Visualization API 返回的 JSON 格式
                 const text = await response.text();
-                const jsonString = text.substring(47).slice(0, -2); // 移除 "google.visualization.Query.setResponse(" 和 ");"
+                const jsonString = text.substring(47).slice(0, -2);
                 const data = JSON.parse(jsonString);
                 
                 if (data.table && data.table.rows) {
-                    // =================================================
-                    // 關鍵修改：對應新的 Sheet 欄位順序 (0-Based Index)
-                    // =================================================
-                    allAds = data.table.rows.map(row => {
-                        // 檢查 status 是否為 Done，如果不是，media_url 使用 original fallback
-                        const status = row.c[0]?.v || 'Pending';
-                        const finalUrl = row.c[9]?.v;
-                        const originalUrl = row.c[4]?.v;
-                        
-                        // 優先使用處理後的 Drive 連結，如果沒有則使用原始連結
-                        const displayUrl = finalUrl || originalUrl || '';
-
-                        return {
-                            status: status,
-                            type: row.c[1]?.v || 'image',          // Col B
-                            ad_archive_id: row.c[2]?.v || '',      // Col C
-                            page_name: row.c[3]?.v || 'Unknown',   // Col D
-                            media_url: displayUrl,                 // Col J (or E fallback)
-                            original_feed: row.c[5]?.v || '',      // Col F
-                            original_title: row.c[6]?.v || '',     // Col G
-                            start_date: row.c[8]?.v || '',         // Col I
-                            summary: row.c[10]?.v || '',           // Col K
-                            rewritten_ad_copy: row.c[11]?.v || '', // Col L
-                            analysis: row.c[12]?.v || ''           // Col M
-                        };
-                    });
+                    allAds = data.table.rows.map(row => ({
+                        ad_archive_id: row.c[0]?.v || '',
+                        type: row.c[1]?.v || 'image',
+                        media_url: row.c[2]?.v || '',
+                        start_date: row.c[3]?.v || '',
+                        page_name: row.c[4]?.v || 'Unknown',
+                        original_feed: row.c[5]?.v || '',
+                        original_title: row.c[6]?.v || '',
+                        summary: row.c[8]?.v || '',
+                        rewritten_ad_copy: row.c[9]?.v || '',
+                        analysis: row.c[12]?.v || ''
+                    }));
                     
                     calculateStats();
                     setupFilters();
@@ -355,9 +340,10 @@
             }
         }
 
-        // 日期格式化函數
+        // 日期格式化函數 (已修復)
         const formatDate = (dateStr) => {
             if (!dateStr) return 'N/A';
+            
             // 匹配 Google 的 Date(y,m,d,h,m,s) 格式
             const googleMatch = dateStr.match(/Date\((\d+),(\d+),(\d+)/);
             if (googleMatch) {
@@ -366,6 +352,14 @@
                 const day = parseInt(googleMatch[3]);
                 const date = new Date(year, month, day);
                 return date.toLocaleDateString('zh-HK', {
+                    year: 'numeric', month: '2-digit', day: '2-digit'
+                }).replace(/\//g, '-');
+            }
+            
+            // 處理普通日期字串
+            const simpleDate = new Date(dateStr);
+            if (!isNaN(simpleDate.getTime())) {
+                return simpleDate.toLocaleDateString('zh-HK', {
                     year: 'numeric', month: '2-digit', day: '2-digit'
                 }).replace(/\//g, '-');
             }
@@ -393,18 +387,10 @@
                 const realIdx = append ? start + idx : idx;
                 const adId = `ad-${realIdx}`;
                 const formattedDate = formatDate(ad.start_date);
-                // 如果 summary 還沒生成，就顯示 original feed
-                const previewText = ad.summary || ad.original_feed || '';
-                const preview = highlightText(previewText.substring(0, 100) + '...', term);
+                const preview = highlightText((ad.original_feed || ad.summary || '').substring(0, 100) + '...', term);
 
                 const div = document.createElement('div');
                 div.className = 'bg-dark-card border border-dark-border rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-500/30 flex flex-col';
-                
-                // 狀態標籤 (Pending/Done)
-                const statusBadge = ad.status === 'Pending' 
-                    ? `<span class="px-2 py-0.5 rounded bg-yellow-900/30 text-yellow-400 border border-yellow-800 text-[10px]">處理中</span>` 
-                    : `<span class="px-2 py-0.5 rounded bg-emerald-900/30 text-emerald-400 border border-emerald-800 text-[10px]">已完成</span>`;
-
                 div.innerHTML = `
                     <div class="p-5 border-b border-dark-border flex justify-between items-start bg-gradient-to-r from-slate-900 to-slate-800">
                         <div>
@@ -414,7 +400,6 @@
                                 <span class="px-2 py-0.5 rounded ${ad.type === 'image' ? 'bg-blue-900/30 text-blue-400 border-blue-800' : 'bg-pink-900/30 text-pink-400 border-pink-800'} border">
                                     ${ad.type === 'image' ? '<i class="ri-image-fill mr-1"></i>圖片' : '<i class="ri-movie-fill mr-1"></i>影片'}
                                 </span>
-                                ${statusBadge}
                             </div>
                         </div>
                     </div>
