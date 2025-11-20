@@ -311,8 +311,8 @@
         if (data.table && data.table.rows) {
             // 解析數據並過濾
             allAds = data.table.rows.map(row => {
-                const status = row.c[11]?.v || 'Pending';
-                const finalUrl = row.c[12]?.v;
+                const status = row.c[0]?.v || 'Pending';
+                const finalUrl = row.c[9]?.v;
                 const originalUrl = row.c[4]?.v;
                 
                 // 優先使用 N8N 填寫的 final_media_url
