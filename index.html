@@ -391,7 +391,6 @@
 
                 const div = document.createElement('div');
                 div.className = 'bg-dark-card border border-dark-border rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-500/30 flex flex-col';
-                // 修改處：將 object-cover 改為 object-contain
                 div.innerHTML = `
                     <div class="p-5 border-b border-dark-border flex justify-between items-start bg-gradient-to-r from-slate-900 to-slate-800">
                         <div>
@@ -464,7 +463,10 @@
         function calculateStats() {
             const stats = {totalAds:allAds.length, brands:{}, types:{image:0,video:0}};
             allAds.forEach(ad=>{
-                if(ad.page_name) stats.brands[ad.page_name]=1;
+                if(ad.page_name) {
+                    // 修改處：從直接賦值 1 改為累加數量
+                    stats.brands[ad.page_name] = (stats.brands[ad.page_name] || 0) + 1;
+                }
                 ad.type==='image'?stats.types.image++:stats.types.video++;
             });
             ['totalAds','imageAds','videoAds'].forEach(id=>animateValue(id,0,stats[id]||stats.types[id.replace('Ads','')],1000));
@@ -514,7 +516,15 @@
             
             brandChart = new Chart(document.getElementById('brandChart'), {
                 type: 'doughnut',
-                data: { labels: Object.keys(s.brands), datasets: [{ data: Object.values(s.brands).map(()=>1), backgroundColor: ['#6366f1','#8b5cf6','#ec4899','#f43f5e','#3b82f6'], borderWidth: 0 }] },
+                data: { 
+                    labels: Object.keys(s.brands), 
+                    datasets: [{ 
+                        // 修改處：直接使用統計出來的數值，移除 .map(()=>1)
+                        data: Object.values(s.brands), 
+                        backgroundColor: ['#6366f1','#8b5cf6','#ec4899','#f43f5e','#3b82f6'], 
+                        borderWidth: 0 
+                    }] 
+                },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { usePointStyle: true, padding: 20 } } }, cutout: '75%' }
             });
             
