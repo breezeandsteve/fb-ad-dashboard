@@ -295,63 +295,51 @@
         }
 
         async function loadData() {
-    try {
-        // 呼叫 Worker，Worker 會去抓取新的 Google Sheet 數據
-        const response = await fetch(`${WORKER_ENDPOINT}?brand=${currentBrandKey}`);
-        if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            throw new Error(errData.error || `查無數據或 Worker 配置錯誤`);
+            try {
+                if (WORKER_ENDPOINT.includes('YOUR_WORKER_NAME')) throw new Error('請先設定 JavaScript 中的 Cloudflare Worker 網址');
+                
+                const response = await fetch(`${WORKER_ENDPOINT}?brand=${currentBrandKey}`);
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error || `查無 Page ID: ${currentBrandKey}`);
+                }
+
+                const text = await response.text();
+                const jsonString = text.substring(47).slice(0, -2);
+                const data = JSON.parse(jsonString);
+                
+                if (data.table && data.table.rows) {
+                    allAds = data.table.rows.map(row => ({
+                        ad_archive_id: row.c[0]?.v || '',
+                        type: row.c[1]?.v || 'image',
+                        media_url: row.c[14]?.v || '',
+                        start_date: row.c[3]?.v || '',
+                        page_name: row.c[4]?.v || 'Unknown',
+                        original_feed: row.c[5]?.v || '',
+                        original_title: row.c[6]?.v || '',
+                        summary: row.c[8]?.v || '',
+                        rewritten_ad_copy: row.c[9]?.v || '',
+                        analysis: row.c[12]?.v || ''
+                    }));
+                    
+                    calculateStats();
+                    setupFilters();
+                    initializeCharts();
+                    filteredAds = [...allAds];
+                    renderAds();
+                    if (!window.eventsInitialized) { bindEventListeners(); window.eventsInitialized = true; }
+                    
+                    loading.classList.add('hidden');
+                    mainContent.classList.remove('hidden');
+                    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('zh-HK');
+                } else { throw new Error('數據為空'); }
+            } catch (err) {
+                loading.classList.add('hidden');
+                error.classList.remove('hidden');
+                errorMessage.textContent = err.message;
+            }
         }
 
-        // 處理 Google Visualization API 返回的 JSON 格式
-        const text = await response.text();
-        const jsonString = text.substring(47).slice(0, -2); 
-        const data = JSON.parse(jsonString);
-        
-        if (data.table && data.table.rows) {
-            // 解析數據並過濾
-            allAds = data.table.rows.map(row => {
-                const status = row.c[0]?.v || 'Pending';
-                const finalUrl = row.c[9]?.v;
-                const originalUrl = row.c[4]?.v;
-                
-                // 優先使用 N8N 填寫的 final_media_url
-                const displayUrl = finalUrl || originalUrl || '';
-
-                return {
-                    status: status,
-                    type: row.c[1]?.v || 'image',          
-                    ad_archive_id: row.c[2]?.v || '',      
-                    page_name: row.c[3]?.v || 'Unknown',   
-                    media_url: displayUrl,                 
-                    original_feed: row.c[5]?.v || '',      
-                    original_title: row.c[6]?.v || '',     
-                    start_date: row.c[8]?.v || '',         
-                    summary: row.c[10]?.v || '',           
-                    rewritten_ad_copy: row.c[11]?.v || '', 
-                    analysis: row.c[12]?.v || ''           
-                };
-            })
-            // ★ 只顯示 Status 為 Done 的資料
-            .filter(ad => ad.status === 'Done'); 
-            
-            calculateStats();
-            setupFilters();
-            initializeCharts();
-            filteredAds = [...allAds];
-            renderAds();
-            if (!window.eventsInitialized) { bindEventListeners(); window.eventsInitialized = true; }
-            
-            loading.classList.add('hidden');
-            mainContent.classList.remove('hidden');
-            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('zh-HK');
-        } else { throw new Error('數據為空'); }
-    } catch (err) {
-        loading.classList.add('hidden');
-        error.classList.remove('hidden');
-        errorMessage.textContent = err.message;
-    }
-}
         // 日期格式化函數 (已修復)
         const formatDate = (dateStr) => {
             if (!dateStr) return 'N/A';
