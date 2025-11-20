@@ -340,7 +340,7 @@
             }
         }
 
-        // 日期格式化函數 (已修復)
+        // 日期格式化函數
         const formatDate = (dateStr) => {
             if (!dateStr) return 'N/A';
             
@@ -391,6 +391,7 @@
 
                 const div = document.createElement('div');
                 div.className = 'bg-dark-card border border-dark-border rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-500/30 flex flex-col';
+                // 修改處：將 object-cover 改為 object-contain
                 div.innerHTML = `
                     <div class="p-5 border-b border-dark-border flex justify-between items-start bg-gradient-to-r from-slate-900 to-slate-800">
                         <div>
@@ -404,7 +405,7 @@
                         </div>
                     </div>
                     <div class="relative group bg-black aspect-video flex items-center justify-center overflow-hidden">
-                        ${ad.media_url ? (ad.type === 'image' ? `<img src="${ad.media_url}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy">` : `<video controls class="w-full h-full max-h-[300px] object-contain"><source src="${ad.media_url}"></video>`) : '<div class="text-slate-600 text-sm">無媒體內容</div>'}
+                        ${ad.media_url ? (ad.type === 'image' ? `<img src="${ad.media_url}" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" loading="lazy">` : `<video controls class="w-full h-full max-h-[300px] object-contain"><source src="${ad.media_url}"></video>`) : '<div class="text-slate-600 text-sm">無媒體內容</div>'}
                     </div>
                     <div class="p-5 flex-1 flex flex-col">
                         <div class="text-slate-400 text-sm leading-relaxed mb-4 flex-1">${preview}</div>
