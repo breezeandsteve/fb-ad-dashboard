@@ -464,7 +464,6 @@
             const stats = {totalAds:allAds.length, brands:{}, types:{image:0,video:0}};
             allAds.forEach(ad=>{
                 if(ad.page_name) {
-                    // 修改處：從直接賦值 1 改為累加數量
                     stats.brands[ad.page_name] = (stats.brands[ad.page_name] || 0) + 1;
                 }
                 ad.type==='image'?stats.types.image++:stats.types.video++;
@@ -509,19 +508,35 @@
             });
         }
 
+        // 新增：動態顏色生成函數 (Golden Angle 算法)
+        function generateColors(count) {
+            const colors = [];
+            for (let i = 0; i < count; i++) {
+                // 使用黃金角度 (~137.5度) 讓顏色在色相環上最大化分散
+                const hue = (i * 137.508) % 360;
+                // Saturation: 70%, Lightness: 60% (適合深色模式的高對比、不刺眼設定)
+                colors.push(`hsl(${hue}, 70%, 60%)`);
+            }
+            return colors;
+        }
+
         function initializeCharts() {
             const s = calculateStats();
             if(brandChart) brandChart.destroy();
             if(typeChart) typeChart.destroy();
             
+            const brandNames = Object.keys(s.brands);
+            // 呼叫生成顏色的函數
+            const dynamicColors = generateColors(brandNames.length);
+
             brandChart = new Chart(document.getElementById('brandChart'), {
                 type: 'doughnut',
                 data: { 
-                    labels: Object.keys(s.brands), 
+                    labels: brandNames, 
                     datasets: [{ 
-                        // 修改處：直接使用統計出來的數值，移除 .map(()=>1)
                         data: Object.values(s.brands), 
-                        backgroundColor: ['#6366f1','#8b5cf6','#ec4899','#f43f5e','#3b82f6'], 
+                        // 使用動態生成的顏色
+                        backgroundColor: dynamicColors, 
                         borderWidth: 0 
                     }] 
                 },
