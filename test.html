@@ -382,12 +382,27 @@
                 div.className = 'bg-dark-card border border-dark-border rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-500/30 flex flex-col group';
                 
                 let mediaHtml = '';
-                if (ad.type === 'video') {
-                     // 影片海報圖預設用 .jpg
-                     mediaHtml = `<video controls preload="none" poster="${ad.media_url ? ad.media_url.replace('.mp4','.jpg') : ''}" class="w-full h-full max-h-[300px] object-contain bg-black"><source src="${ad.media_url}" type="video/mp4"></video>`;
-                } else {
-                     mediaHtml = `<img src="${ad.media_url}" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" loading="lazy" alt="Ad Creative">`;
-                }
+// 找到這一段並替換
+if (ad.type === 'video') {
+     // 修改重點：
+     // 1. preload="metadata"：允許瀏覽器預載入影片資訊
+     // 2. src 加入 #t=0.001：強制影片定位在起始點，觸發預覽渲染
+     // 3. 保留 poster 邏輯作為備案，但通常 FB 網址直接換副檔名會失敗
+     
+     const posterSrc = ad.media_url ? ad.media_url.replace('.mp4','.jpg') : '';
+     
+     mediaHtml = `
+        <video 
+            controls 
+            preload="metadata" 
+            poster="${posterSrc}" 
+            class="w-full h-full max-h-[300px] object-contain bg-black"
+        >
+            <source src="${ad.media_url}#t=0.001" type="video/mp4">
+        </video>`;
+} else {
+     mediaHtml = `<img src="${ad.media_url}" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" loading="lazy" alt="Ad Creative">`;
+}
 
                 div.innerHTML = `
                     <div class="p-4 border-b border-dark-border flex justify-between items-center bg-gradient-to-r from-slate-900 to-slate-800">
