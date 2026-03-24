@@ -2,23 +2,6 @@ const SHEET_ID = '1NzSHaQe6puchCA1B-tU2-4VLR1_gHlOQCiCuV9DIltk';
 const SHEET_NAME = 'Sheet1';
 const SHEET_LABEL = 'CH FB SPY';
 const ADS_PER_PAGE = 12;
-const COLUMN_INDEX = {
-  ad_archive_id: 0,
-  type: 1,
-  original_media_url: 2,
-  start_date: 3,
-  page_name: 4,
-  original_feed: 5,
-  original_title: 6,
-  original_description: 7,
-  summary: 8,
-  rewritten_ad_copy: 9,
-  image_prompt: 10,
-  video_prompt: 11,
-  analysis: 12,
-  status: 13,
-  final_media_url: 14,
-};
 
 const escapeMap = {
   '&': '&amp;',
@@ -44,6 +27,23 @@ function getCellValue(row, index) {
   return row?.c?.[index]?.v ?? '';
 }
 
+function buildColumnIndex(columns) {
+  return columns.reduce((indexMap, column, index) => {
+    const label = normalizeText(column?.label || column?.id).toLowerCase();
+
+    if (label && indexMap[label] === undefined) {
+      indexMap[label] = index;
+    }
+
+    return indexMap;
+  }, {});
+}
+
+function getColumnValue(row, columnIndex, label) {
+  const index = columnIndex[label];
+  return index === undefined ? '' : getCellValue(row, index);
+}
+
 function isSafeMediaUrl(url) {
   if (!url) {
     return false;
@@ -58,6 +58,10 @@ function isSafeMediaUrl(url) {
 }
 
 function normalizeText(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item ?? '').trim()).filter(Boolean).join(', ');
+  }
+
   return String(value ?? '').trim();
 }
 
@@ -80,10 +84,12 @@ export function extractSheetPayload(text) {
   throw new Error('無法解析資料格式');
 }
 
-export function formatAdsFromSheetRows(rows) {
+export function formatAdsFromSheetRows(rows, columns = []) {
+  const columnIndex = buildColumnIndex(columns);
+
   return rows.map((row) => {
-    const originalMediaUrl = normalizeText(getCellValue(row, COLUMN_INDEX.original_media_url));
-    const finalMediaUrl = normalizeText(getCellValue(row, COLUMN_INDEX.final_media_url));
+    const originalMediaUrl = normalizeText(getColumnValue(row, columnIndex, 'original_media_url'));
+    const finalMediaUrl = normalizeText(getColumnValue(row, columnIndex, 'final_media_url'));
     const mediaUrl = isSafeMediaUrl(finalMediaUrl)
       ? finalMediaUrl
       : isSafeMediaUrl(originalMediaUrl)
@@ -91,17 +97,15 @@ export function formatAdsFromSheetRows(rows) {
         : '';
 
     return {
-      ad_archive_id: normalizeText(getCellValue(row, COLUMN_INDEX.ad_archive_id)),
-      type: normalizeText(getCellValue(row, COLUMN_INDEX.type)) || 'image',
+      ad_archive_id: normalizeText(getColumnValue(row, columnIndex, 'ad_archive_id')),
+      type: normalizeText(getColumnValue(row, columnIndex, 'type')) || 'image',
       media_url: mediaUrl,
-      start_date: normalizeText(getCellValue(row, COLUMN_INDEX.start_date)),
-      page_name: normalizeText(getCellValue(row, COLUMN_INDEX.page_name)) || 'Unknown',
-      original_feed: normalizeText(getCellValue(row, COLUMN_INDEX.original_feed)),
-      original_title: normalizeText(getCellValue(row, COLUMN_INDEX.original_title)),
-      original_description: normalizeText(getCellValue(row, COLUMN_INDEX.original_description)),
-      summary: normalizeText(getCellValue(row, COLUMN_INDEX.summary)),
-      rewritten_ad_copy: normalizeText(getCellValue(row, COLUMN_INDEX.rewritten_ad_copy)),
-      analysis: normalizeText(getCellValue(row, COLUMN_INDEX.analysis)),
+      start_date: normalizeText(getColumnValue(row, columnIndex, 'start_date')),
+      page_name: normalizeText(getColumnValue(row, columnIndex, 'page_name')) || 'Unknown',
+      original_feed: normalizeText(getColumnValue(row, columnIndex, 'original_feed')),
+      platforms: normalizeText(getColumnValue(row, columnIndex, 'platforms')),
+      cta_text: normalizeText(getColumnValue(row, columnIndex, 'cta_text')),
+      original_url: normalizeText(getColumnValue(row, columnIndex, 'original_url')),
     };
   });
 }
@@ -183,17 +187,20 @@ function computeStats(ads) {
 
 function createDetailsMarkup(ad, term) {
   return [
-    ['原始標題', ad.original_title],
     ['原始文案', ad.original_feed],
-    ['摘要觀察', ad.summary],
-    ['改寫文案', ad.rewritten_ad_copy],
-    ['策略分析', ad.analysis],
+    ['投放平台', ad.platforms],
+    ['行動呼籲', ad.cta_text],
+    ['原始連結', ad.original_url],
   ]
     .filter(([, value]) => value)
     .map(([label, value]) => `
       <section class="detail-panel">
         <p class="detail-label">${escapeHtml(label)}</p>
-        <div class="detail-copy">${highlightText(value, term)}</div>
+        ${
+          label === '原始連結' && isSafeMediaUrl(value)
+            ? `<a class="detail-copy detail-link" href="${escapeHtml(value)}" target="_blank" rel="noreferrer">${highlightText(value, term)}</a>`
+            : `<div class="detail-copy">${highlightText(value, term)}</div>`
+        }
       </section>
     `)
     .join('');
@@ -224,7 +231,7 @@ function createMediaNode(ad) {
   const image = document.createElement('img');
   image.className = 'ad-image';
   image.loading = 'lazy';
-  image.alt = ad.original_title || ad.page_name || 'Ad preview';
+  image.alt = ad.page_name || 'Ad preview';
   image.src = ad.media_url;
   frame.appendChild(image);
   return frame;
@@ -238,9 +245,11 @@ function syncToggleButton(button, expanded) {
 function createAdCard(ad, index, term, expanded) {
   const card = document.createElement('article');
   const detailId = `details-${index}`;
-  const previewSource = ad.original_feed || ad.summary || ad.original_title || '沒有文字內容';
+  const detailMarkup = createDetailsMarkup(ad, term);
+  const previewSource = ad.original_feed || ad.cta_text || ad.original_url || '沒有文字內容';
   const previewText = truncateText(previewSource);
   const mediaBadge = ad.type === 'video' ? 'VIDEO' : 'IMAGE';
+  const metaItems = [formatDate(ad.start_date), ad.platforms].filter(Boolean);
 
   card.className = 'ad-card';
   card.innerHTML = `
@@ -250,22 +259,30 @@ function createAdCard(ad, index, term, expanded) {
         <h3 class="ad-title">${highlightText(ad.page_name, term)}</h3>
       </div>
       <div class="ad-meta">
-        <span>${escapeHtml(formatDate(ad.start_date))}</span>
-        <span>${escapeHtml(ad.ad_archive_id || 'N/A')}</span>
+        ${metaItems.map((item) => `<span>${escapeHtml(item)}</span>`).join('')}
       </div>
     </div>
     <div class="ad-stage"></div>
     <div class="ad-body">
       <div class="ad-preview">${highlightText(previewText, term)}</div>
-      <div class="ad-details-wrap${expanded ? ' expanded' : ''}" id="${detailId}">
-        <div class="ad-details-grid">${createDetailsMarkup(ad, term)}</div>
-      </div>
-      <button class="detail-toggle" data-target="${detailId}" type="button"></button>
+      ${
+        detailMarkup
+          ? `
+            <div class="ad-details-wrap${expanded ? ' expanded' : ''}" id="${detailId}">
+              <div class="ad-details-grid">${detailMarkup}</div>
+            </div>
+            <button class="detail-toggle" data-target="${detailId}" type="button"></button>
+          `
+          : ''
+      }
     </div>
   `;
 
   card.querySelector('.ad-stage').appendChild(createMediaNode(ad));
-  syncToggleButton(card.querySelector('.detail-toggle'), expanded);
+  const toggleButton = card.querySelector('.detail-toggle');
+  if (toggleButton) {
+    syncToggleButton(toggleButton, expanded);
+  }
 
   return card;
 }
@@ -467,11 +484,10 @@ function setupDashboard() {
       const matchesType = !selectedType || ad.type === selectedType;
       const haystack = [
         ad.page_name,
-        ad.original_title,
         ad.original_feed,
-        ad.summary,
-        ad.rewritten_ad_copy,
-        ad.analysis,
+        ad.platforms,
+        ad.cta_text,
+        ad.original_url,
       ].join(' ').toLowerCase();
       const matchesSearch = !term || haystack.includes(term);
 
@@ -523,13 +539,14 @@ function setupDashboard() {
       }
 
       const payload = extractSheetPayload(bodyText);
+      const columns = payload?.table?.cols;
       const rows = payload?.table?.rows;
 
       if (!Array.isArray(rows) || rows.length === 0) {
         throw new Error('工作表沒有可顯示的廣告資料');
       }
 
-      allAds = formatAdsFromSheetRows(rows);
+      allAds = formatAdsFromSheetRows(rows, Array.isArray(columns) ? columns : []);
       filteredAds = [...allAds];
       currentPage = 1;
       allExpanded = false;

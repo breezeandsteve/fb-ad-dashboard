@@ -39,6 +39,19 @@ test('highlightText escapes dangerous HTML before adding highlight markup', () =
 });
 
 test('formatAdsFromSheetRows prefers final media URL when present', () => {
+  const columns = [
+    { label: 'ad_archive_id' },
+    { label: 'type' },
+    { label: 'original_media_url' },
+    { label: 'start_date' },
+    { label: 'page_name' },
+    { label: 'original_feed' },
+    { label: 'platforms' },
+    { label: 'cta_text' },
+    { label: 'original_url' },
+    { label: 'status' },
+    { label: 'final_media_url' },
+  ];
   const rows = [
     {
       c: [
@@ -48,21 +61,20 @@ test('formatAdsFromSheetRows prefers final media URL when present', () => {
         { v: '2026-03-24' },
         { v: 'Brand A' },
         { v: 'feed' },
-        { v: 'title' },
-        null,
-        { v: 'summary' },
-        { v: 'rewrite' },
-        null,
-        null,
-        { v: 'analysis' },
-        null,
+        { v: 'Facebook, Instagram' },
+        { v: 'Book now' },
+        { v: 'https://brand.example/landing' },
+        { v: 'Done' },
         { v: 'https://final.example/video.mp4' },
       ],
     },
   ];
 
-  const ads = formatAdsFromSheetRows(rows);
+  const ads = formatAdsFromSheetRows(rows, columns);
 
   assert.equal(ads[0].media_url, 'https://final.example/video.mp4');
   assert.equal(ads[0].page_name, 'Brand A');
+  assert.equal(ads[0].platforms, 'Facebook, Instagram');
+  assert.equal(ads[0].cta_text, 'Book now');
+  assert.equal(ads[0].original_url, 'https://brand.example/landing');
 });

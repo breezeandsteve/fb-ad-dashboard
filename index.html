@@ -461,6 +461,16 @@
             font-size: 0.95rem;
         }
 
+        .detail-link {
+            color: var(--accent);
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .detail-link:hover {
+            text-decoration: underline;
+        }
+
         .ad-details-wrap {
             display: grid;
             grid-template-rows: 0fr;
@@ -605,7 +615,7 @@
             <div>
                 <span class="header-label">Competitive Ad Intelligence Desk</span>
                 <h1 class="header-title">Ads War Room</h1>
-                <p class="header-copy">直接連接 Google Sheet，整理 Facebook 同行廣告成可搜尋、可篩選、可展開的 creative intelligence desk。重點不是炫技，而是讓你更快看懂對手在做什麼。</p>
+                <p class="header-copy">直接連接 Google Sheet，把你監視中的 Facebook 同行廣告整理成可搜尋、可篩選、可分組的戰情畫面。重點是快速看清誰在投、投在哪裡、把流量帶去邊度。</p>
             </div>
             <div class="command-cluster">
                 <div class="input-group">
@@ -628,19 +638,19 @@
                 <span>View Refreshed</span>
                 <strong id="lastUpdate">等待載入</strong>
             </div>
-            <p class="status-copy">資料直接來自 Google Sheet。你可以用上方輸入框快速聚焦單一廣告主，或在左側控制台做細部篩選。</p>
+            <p class="status-copy">資料直接來自 Google Sheet。你可以用上方輸入框快速聚焦單一廣告主，再用左側控制台整理你想長期監視的同行組合。</p>
         </section>
 
         <section id="emptyState" class="state-panel">
             <span class="panel-label">Awaiting Input</span>
             <h2>正在準備 Google Sheet 廣告情報流</h2>
-            <p>頁面會直接讀取目前綁定的 Google Sheet，並把同行廣告整理成可搜尋、可篩選、可展開的 creative feed。</p>
+            <p>頁面會直接讀取目前綁定的 Google Sheet，並把同行廣告整理成可搜尋、可篩選、可分組的監控 feed。</p>
         </section>
 
         <section id="loadingState" class="state-panel" hidden>
             <span class="panel-label">Syncing</span>
             <h2>正在連接資料源</h2>
-            <p>系統正在抓取你指定的監控板，準備整理廣告素材、文案摘要與分析欄位。</p>
+            <p>系統正在抓取你指定的監控板，準備整理廣告素材、投放平台、CTA 同落地連結。</p>
             <div class="loading-grid" aria-hidden="true">
                 <span></span>
                 <span></span>
@@ -683,7 +693,7 @@
                             <h2 class="panel-title">控制台面板</h2>
                         </div>
                     </div>
-                    <p class="panel-copy">篩選條件會即時反映在右側 creative feed 與圖表。</p>
+                    <p class="panel-copy">篩選條件會即時反映在右側 feed 與圖表，方便你把多個監視對象拉成同一個觀察面。</p>
                     <div class="control-stack">
                         <select id="brandFilter" aria-label="廣告主篩選">
                             <option value="">全部廣告主</option>
@@ -691,7 +701,7 @@
                         <select id="typeFilter" aria-label="素材類型篩選">
                             <option value="">所有素材</option>
                         </select>
-                        <input type="text" id="searchInput" placeholder="搜尋標題、文案、摘要、分析">
+                        <input type="text" id="searchInput" placeholder="搜尋品牌、文案、平台、CTA、連結">
                         <button id="expandAllBtn" class="subtle-btn" type="button">全部展開</button>
                     </div>
                 </aside>
