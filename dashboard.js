@@ -159,19 +159,23 @@ function truncateText(text, maxLength = 140) {
   return `${content.slice(0, maxLength).trimEnd()}…`;
 }
 
-function computeStats(ads) {
+export function computeStats(ads) {
   const stats = {
     totalAds: ads.length,
     totalBrands: 0,
     imageAds: 0,
     videoAds: 0,
     brands: {},
+    ctas: {},
   };
 
   ads.forEach((ad) => {
     if (ad.page_name) {
       stats.brands[ad.page_name] = (stats.brands[ad.page_name] || 0) + 1;
     }
+
+    const ctaLabel = ad.cta_text || 'No CTA';
+    stats.ctas[ctaLabel] = (stats.ctas[ctaLabel] || 0) + 1;
 
     if (ad.type === 'video') {
       stats.videoAds += 1;
@@ -300,8 +304,9 @@ function updateCharts(stats, chartState) {
 
   const brandChartNode = document.getElementById('brandChart');
   const typeChartNode = document.getElementById('typeChart');
+  const ctaChartNode = document.getElementById('ctaChart');
 
-  if (!brandChartNode || !typeChartNode) {
+  if (!brandChartNode || !typeChartNode || !ctaChartNode) {
     return;
   }
 
@@ -313,9 +318,16 @@ function updateCharts(stats, chartState) {
     chartState.type.destroy();
   }
 
+  if (chartState.cta) {
+    chartState.cta.destroy();
+  }
+
   const brandEntries = Object.entries(stats.brands)
     .sort((left, right) => right[1] - left[1])
     .slice(0, 8);
+  const ctaEntries = Object.entries(stats.ctas)
+    .sort((left, right) => right[1] - left[1])
+    .slice(0, 6);
 
   chartState.brand = new Chart(brandChartNode, {
     type: 'bar',
@@ -383,6 +395,45 @@ function updateCharts(stats, chartState) {
       },
     },
   });
+
+  chartState.cta = new Chart(ctaChartNode, {
+    type: 'bar',
+    data: {
+      labels: ctaEntries.map(([label]) => label),
+      datasets: [
+        {
+          data: ctaEntries.map(([, value]) => value),
+          backgroundColor: 'rgba(125, 211, 252, 0.78)',
+          borderRadius: 10,
+          maxBarThickness: 18,
+        },
+      ],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          grid: {
+            color: 'rgba(148, 163, 184, 0.12)',
+          },
+          ticks: {
+            precision: 0,
+          },
+        },
+        y: {
+          grid: {
+            display: false,
+          },
+        },
+      },
+    },
+  });
 }
 
 function showOnly(stateName, elements) {
@@ -433,7 +484,7 @@ function setupDashboard() {
   const resultCount = document.getElementById('resultCount');
   const errorMessage = document.getElementById('errorMessage');
   const lastUpdate = document.getElementById('lastUpdate');
-  const chartState = { brand: null, type: null };
+  const chartState = { brand: null, type: null, cta: null };
 
   let allAds = [];
   let filteredAds = [];

@@ -294,7 +294,6 @@
         }
 
         .summary-strip {
-            margin-top: 22px;
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 14px;
@@ -371,6 +370,10 @@
 
         .feed-panel {
             padding: 22px;
+        }
+
+        .feed-summary {
+            margin-bottom: 18px;
         }
 
         .feed-header {
@@ -524,6 +527,10 @@
             padding: 22px;
         }
 
+        .chart-panel-wide {
+            grid-column: 1 / -1;
+        }
+
         .chart-shell {
             position: relative;
             min-height: 280px;
@@ -666,25 +673,6 @@
         </section>
 
         <div id="mainContent" hidden>
-            <section class="summary-strip">
-                <div class="stat-card">
-                    <span>Total Creatives</span>
-                    <strong id="totalAds">0</strong>
-                </div>
-                <div class="stat-card">
-                    <span>Advertisers</span>
-                    <strong id="totalBrands">0</strong>
-                </div>
-                <div class="stat-card">
-                    <span>Image Units</span>
-                    <strong id="imageAds">0</strong>
-                </div>
-                <div class="stat-card">
-                    <span>Video Units</span>
-                    <strong id="videoAds">0</strong>
-                </div>
-            </section>
-
             <section class="main-grid">
                 <aside class="command-panel">
                     <div class="panel-header">
@@ -707,6 +695,24 @@
                 </aside>
 
                 <section class="feed-panel">
+                    <section class="summary-strip feed-summary">
+                        <div class="stat-card">
+                            <span>Total Creatives</span>
+                            <strong id="totalAds">0</strong>
+                        </div>
+                        <div class="stat-card">
+                            <span>Advertisers</span>
+                            <strong id="totalBrands">0</strong>
+                        </div>
+                        <div class="stat-card">
+                            <span>Image Units</span>
+                            <strong id="imageAds">0</strong>
+                        </div>
+                        <div class="stat-card">
+                            <span>Video Units</span>
+                            <strong id="videoAds">0</strong>
+                        </div>
+                    </section>
                     <div class="feed-header">
                         <div>
                             <span class="panel-label">Creative Feed</span>
@@ -719,30 +725,40 @@
                     <div id="loadMoreContainer" class="load-more-wrap" hidden>
                         <button id="loadMoreBtn" class="load-more-btn" type="button">載入更多廣告</button>
                     </div>
-                </section>
-            </section>
+                    <section class="charts-grid">
+                        <section class="chart-panel">
+                            <div class="chart-header">
+                                <div>
+                                    <span class="panel-label">Ranked View</span>
+                                    <h2 class="panel-title">廣告主分佈</h2>
+                                </div>
+                            </div>
+                            <p class="chart-caption">以目前篩選結果為準，顯示廣告量最高的前幾個廣告主。</p>
+                            <div class="chart-shell"><canvas id="brandChart"></canvas></div>
+                        </section>
 
-            <section class="charts-grid">
-                <section class="chart-panel">
-                    <div class="chart-header">
-                        <div>
-                            <span class="panel-label">Ranked View</span>
-                            <h2 class="panel-title">廣告主分佈</h2>
-                        </div>
-                    </div>
-                    <p class="chart-caption">以目前篩選結果為準，顯示廣告量最高的前幾個廣告主。</p>
-                    <div class="chart-shell"><canvas id="brandChart"></canvas></div>
-                </section>
+                        <section class="chart-panel">
+                            <div class="chart-header">
+                                <div>
+                                    <span class="panel-label">Media Mix</span>
+                                    <h2 class="panel-title">素材比例</h2>
+                                </div>
+                            </div>
+                            <p class="chart-caption">同樣跟著目前篩選條件走，方便快速看圖片與影片素材佔比。</p>
+                            <div class="chart-shell"><canvas id="typeChart"></canvas></div>
+                        </section>
 
-                <section class="chart-panel">
-                    <div class="chart-header">
-                        <div>
-                            <span class="panel-label">Media Mix</span>
-                            <h2 class="panel-title">素材比例</h2>
-                        </div>
-                    </div>
-                    <p class="chart-caption">同樣跟著目前篩選條件走，方便快速看圖片與影片素材佔比。</p>
-                    <div class="chart-shell"><canvas id="typeChart"></canvas></div>
+                        <section class="chart-panel chart-panel-wide">
+                            <div class="chart-header">
+                                <div>
+                                    <span class="panel-label">CTA Ranked View</span>
+                                    <h2 class="panel-title">CTA 分佈</h2>
+                                </div>
+                            </div>
+                            <p class="chart-caption">統計目前篩選結果中最常出現的 CTA，方便快速看同行主要行動導向。</p>
+                            <div class="chart-shell"><canvas id="ctaChart"></canvas></div>
+                        </section>
+                    </section>
                 </section>
             </section>
         </div>

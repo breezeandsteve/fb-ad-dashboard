@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   buildSheetUrl,
+  computeStats,
   extractSheetPayload,
   formatAdsFromSheetRows,
   highlightText,
@@ -77,4 +78,21 @@ test('formatAdsFromSheetRows prefers final media URL when present', () => {
   assert.equal(ads[0].platforms, 'Facebook, Instagram');
   assert.equal(ads[0].cta_text, 'Book now');
   assert.equal(ads[0].original_url, 'https://brand.example/landing');
+});
+
+test('computeStats groups CTA distribution and falls back to No CTA', () => {
+  const stats = computeStats([
+    { page_name: 'Brand A', type: 'image', cta_text: 'Learn more' },
+    { page_name: 'Brand A', type: 'video', cta_text: 'Book now' },
+    { page_name: 'Brand B', type: 'video', cta_text: '' },
+    { page_name: 'Brand C', type: 'image', cta_text: 'Learn more' },
+  ]);
+
+  assert.equal(stats.totalAds, 4);
+  assert.equal(stats.totalBrands, 3);
+  assert.deepEqual(stats.ctas, {
+    'Learn more': 2,
+    'Book now': 1,
+    'No CTA': 1,
+  });
 });
