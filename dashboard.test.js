@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   buildSheetUrl,
@@ -95,4 +96,15 @@ test('computeStats groups CTA distribution and falls back to No CTA', () => {
     'Book now': 1,
     'No CTA': 1,
   });
+});
+
+test('index places the chart KPI block before the creative feed list', () => {
+  const html = readFileSync(new URL('./index.html', import.meta.url), 'utf8');
+
+  const chartIndex = html.indexOf('<section class="charts-grid">');
+  const feedIndex = html.indexOf('<div id="adsContainer" class="ads-grid"></div>');
+
+  assert.notEqual(chartIndex, -1);
+  assert.notEqual(feedIndex, -1);
+  assert.ok(chartIndex < feedIndex);
 });
