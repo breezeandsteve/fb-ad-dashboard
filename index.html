@@ -318,6 +318,11 @@
             grid-template-columns: 320px minmax(0, 1fr);
             gap: 18px;
             align-items: start;
+            transition: grid-template-columns 220ms ease;
+        }
+
+        .main-grid.is-collapsed {
+            grid-template-columns: 72px minmax(0, 1fr);
         }
 
         .command-panel,
@@ -331,6 +336,74 @@
             padding: 22px;
             position: sticky;
             top: 18px;
+            display: grid;
+            gap: 18px;
+            align-content: start;
+            transition: padding 220ms ease;
+        }
+
+        .command-panel.is-collapsed {
+            padding: 14px 10px;
+            justify-items: center;
+        }
+
+        .command-panel-content {
+            display: grid;
+            gap: 18px;
+        }
+
+        .command-panel.is-collapsed .command-panel-content {
+            display: none;
+        }
+
+        .sidebar-toggle {
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--line);
+            background: rgba(15, 23, 42, 0.8);
+            color: var(--text);
+            transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
+        }
+
+        .sidebar-toggle:hover {
+            transform: translateY(-1px);
+            border-color: var(--line-strong);
+        }
+
+        .sidebar-toggle-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 999px;
+            background: rgba(94, 234, 212, 0.1);
+            color: var(--signal);
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        .sidebar-toggle-label {
+            font-size: 0.94rem;
+            color: rgba(226, 232, 240, 0.72);
+        }
+
+        .command-panel.is-collapsed .sidebar-toggle {
+            width: 52px;
+            min-width: 52px;
+            height: 52px;
+            padding: 0;
+            justify-content: center;
+            border-radius: 18px;
+        }
+
+        .command-panel.is-collapsed .sidebar-toggle-label {
+            display: none;
         }
 
         .command-panel .panel-header,
@@ -567,6 +640,7 @@
         @media (max-width: 1120px) {
             .app-header,
             .main-grid,
+            .main-grid.is-collapsed,
             .charts-grid {
                 grid-template-columns: 1fr;
             }
@@ -581,6 +655,19 @@
 
             .command-panel {
                 position: static;
+            }
+
+            .sidebar-toggle {
+                display: none;
+            }
+
+            .command-panel.is-collapsed {
+                padding: 22px;
+                justify-items: stretch;
+            }
+
+            .command-panel.is-collapsed .command-panel-content {
+                display: grid;
             }
         }
 
@@ -673,24 +760,30 @@
         </section>
 
         <div id="mainContent" hidden>
-            <section class="main-grid">
-                <aside class="command-panel">
-                    <div class="panel-header">
-                        <div>
-                            <span class="panel-label">Command Filters</span>
-                            <h2 class="panel-title">控制台面板</h2>
+            <section id="mainGrid" class="main-grid">
+                <aside id="commandPanel" class="command-panel">
+                    <button id="sidebarToggleBtn" class="sidebar-toggle" type="button" aria-expanded="true" title="收起篩選側欄">
+                        <span id="sidebarToggleIcon" class="sidebar-toggle-icon" aria-hidden="true">‹</span>
+                        <span id="sidebarToggleLabel" class="sidebar-toggle-label">收起篩選側欄</span>
+                    </button>
+                    <div class="command-panel-content">
+                        <div class="panel-header">
+                            <div>
+                                <span class="panel-label">Command Filters</span>
+                                <h2 class="panel-title">控制台面板</h2>
+                            </div>
                         </div>
-                    </div>
-                    <p class="panel-copy">篩選條件會即時反映在右側 feed 與圖表，方便你把多個監視對象拉成同一個觀察面。</p>
-                    <div class="control-stack">
-                        <select id="brandFilter" aria-label="廣告主篩選">
-                            <option value="">全部廣告主</option>
-                        </select>
-                        <select id="typeFilter" aria-label="素材類型篩選">
-                            <option value="">所有素材</option>
-                        </select>
-                        <input type="text" id="searchInput" placeholder="搜尋品牌、文案、平台、CTA、連結">
-                        <button id="expandAllBtn" class="subtle-btn" type="button">全部展開</button>
+                        <p class="panel-copy">篩選條件會即時反映在右側 feed 與圖表，方便你把多個監視對象拉成同一個觀察面。</p>
+                        <div class="control-stack">
+                            <select id="brandFilter" aria-label="廣告主篩選">
+                                <option value="">全部廣告主</option>
+                            </select>
+                            <select id="typeFilter" aria-label="素材類型篩選">
+                                <option value="">所有素材</option>
+                            </select>
+                            <input type="text" id="searchInput" placeholder="搜尋品牌、文案、平台、CTA、連結">
+                            <button id="expandAllBtn" class="subtle-btn" type="button">全部展開</button>
+                        </div>
                     </div>
                 </aside>
 

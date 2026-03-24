@@ -2,6 +2,8 @@ const SHEET_ID = '1NzSHaQe6puchCA1B-tU2-4VLR1_gHlOQCiCuV9DIltk';
 const SHEET_NAME = 'Sheet1';
 const SHEET_LABEL = 'CH FB SPY';
 const ADS_PER_PAGE = 12;
+const SIDEBAR_STORAGE_KEY = 'ads-war-room-sidebar';
+const SIDEBAR_COLLAPSE_BREAKPOINT = 1120;
 
 const escapeMap = {
   '&': '&amp;',
@@ -187,6 +189,10 @@ export function computeStats(ads) {
 
   stats.totalBrands = Object.keys(stats.brands).length;
   return stats;
+}
+
+export function shouldCollapseSidebar(storedState, viewportWidth) {
+  return storedState === 'collapsed' && viewportWidth > SIDEBAR_COLLAPSE_BREAKPOINT;
 }
 
 function createDetailsMarkup(ad, term) {
@@ -472,6 +478,11 @@ function setupDashboard() {
 
   const refreshButton = document.getElementById('refreshBtn');
   const goButton = document.getElementById('goBtn');
+  const mainGrid = document.getElementById('mainGrid');
+  const commandPanel = document.getElementById('commandPanel');
+  const sidebarToggleButton = document.getElementById('sidebarToggleBtn');
+  const sidebarToggleIcon = document.getElementById('sidebarToggleIcon');
+  const sidebarToggleLabel = document.getElementById('sidebarToggleLabel');
   const brandInput = document.getElementById('brandInput');
   const brandFilter = document.getElementById('brandFilter');
   const typeFilter = document.getElementById('typeFilter');
@@ -491,6 +502,33 @@ function setupDashboard() {
   let currentPage = 1;
   let allExpanded = false;
   let currentBrandKey = new URLSearchParams(window.location.search).get('brand')?.trim() || '';
+  let sidebarState = window.localStorage.getItem(SIDEBAR_STORAGE_KEY) || 'expanded';
+
+  function renderSidebarState() {
+    const collapsed = shouldCollapseSidebar(sidebarState, window.innerWidth);
+    const expanded = !collapsed;
+
+    if (mainGrid) {
+      mainGrid.classList.toggle('is-collapsed', collapsed);
+    }
+
+    if (commandPanel) {
+      commandPanel.classList.toggle('is-collapsed', collapsed);
+    }
+
+    if (sidebarToggleButton) {
+      sidebarToggleButton.setAttribute('aria-expanded', String(expanded));
+      sidebarToggleButton.title = expanded ? '收起篩選側欄' : '展開篩選側欄';
+    }
+
+    if (sidebarToggleIcon) {
+      sidebarToggleIcon.textContent = expanded ? '‹' : '›';
+    }
+
+    if (sidebarToggleLabel) {
+      sidebarToggleLabel.textContent = expanded ? '收起篩選側欄' : '展開篩選側欄';
+    }
+  }
 
   function renderStats() {
     const stats = computeStats(filteredAds);
@@ -646,9 +684,15 @@ function setupDashboard() {
   }
 
   updateShellLabel(currentBrandKey);
+  renderSidebarState();
 
   refreshButton.addEventListener('click', () => {
     loadData();
+  });
+  sidebarToggleButton.addEventListener('click', () => {
+    sidebarState = sidebarState === 'collapsed' ? 'expanded' : 'collapsed';
+    window.localStorage.setItem(SIDEBAR_STORAGE_KEY, sidebarState);
+    renderSidebarState();
   });
   goButton.addEventListener('click', switchBrand);
   brandInput.addEventListener('keydown', (event) => {
@@ -675,6 +719,7 @@ function setupDashboard() {
     panel.classList.toggle('expanded', expanded);
     syncToggleButton(button, expanded);
   });
+  window.addEventListener('resize', renderSidebarState);
 
   loadData();
 }

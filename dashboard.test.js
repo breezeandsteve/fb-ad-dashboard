@@ -8,6 +8,7 @@ import {
   extractSheetPayload,
   formatAdsFromSheetRows,
   highlightText,
+  shouldCollapseSidebar,
 } from './dashboard.js';
 
 test('buildSheetUrl points to the configured Google Sheet gviz endpoint', () => {
@@ -107,4 +108,10 @@ test('index places the chart KPI block before the creative feed list', () => {
   assert.notEqual(chartIndex, -1);
   assert.notEqual(feedIndex, -1);
   assert.ok(chartIndex < feedIndex);
+});
+
+test('shouldCollapseSidebar only collapses on desktop when stored state is collapsed', () => {
+  assert.equal(shouldCollapseSidebar('collapsed', 1440), true);
+  assert.equal(shouldCollapseSidebar('expanded', 1440), false);
+  assert.equal(shouldCollapseSidebar('collapsed', 1024), false);
 });
