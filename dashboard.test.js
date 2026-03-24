@@ -115,3 +115,12 @@ test('shouldCollapseSidebar only collapses on desktop when stored state is colla
   assert.equal(shouldCollapseSidebar('expanded', 1440), false);
   assert.equal(shouldCollapseSidebar('collapsed', 1024), false);
 });
+
+test('index keeps only the refresh status UI from the top control strip', () => {
+  const html = readFileSync(new URL('./index.html', import.meta.url), 'utf8');
+
+  assert.doesNotMatch(html, /id="brandInput"/);
+  assert.doesNotMatch(html, /id="goBtn"/);
+  assert.doesNotMatch(html, /id="currentBrandDisplay"/);
+  assert.match(html, /id="lastUpdate"/);
+});

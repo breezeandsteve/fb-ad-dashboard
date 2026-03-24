@@ -135,23 +135,11 @@
         .command-cluster {
             display: flex;
             gap: 14px;
-            align-items: end;
+            align-items: center;
             flex-wrap: wrap;
             justify-content: flex-end;
         }
 
-        .input-group {
-            min-width: 320px;
-        }
-
-        .input-shell {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .input-shell input,
         .command-panel select,
         .command-panel input[type="text"] {
             width: 100%;
@@ -164,7 +152,6 @@
             transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
         }
 
-        .input-shell input:focus,
         .command-panel select:focus,
         .command-panel input[type="text"]:focus {
             border-color: rgba(94, 234, 212, 0.48);
@@ -213,8 +200,7 @@
             background: rgba(8, 15, 26, 0.74);
             display: flex;
             align-items: center;
-            gap: 14px;
-            flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
         .status-chip {
@@ -231,11 +217,6 @@
             color: var(--text);
             font-weight: 600;
             letter-spacing: 0;
-        }
-
-        .status-copy {
-            color: rgba(226, 232, 240, 0.72);
-            line-height: 1.7;
         }
 
         .state-panel,
@@ -649,10 +630,6 @@
                 justify-content: stretch;
             }
 
-            .input-group {
-                min-width: 0;
-            }
-
             .command-panel {
                 position: static;
             }
@@ -693,10 +670,6 @@
                 padding: 14px;
             }
 
-            .input-shell {
-                grid-template-columns: 1fr;
-            }
-
             .ads-grid {
                 grid-template-columns: 1fr;
             }
@@ -712,27 +685,15 @@
                 <p class="header-copy">監視 Facebook 同行廣告</p>
             </div>
             <div class="command-cluster">
-                <div class="input-group">
-                    <label for="brandInput">快速定位廣告主</label>
-                    <div class="input-shell">
-                        <input type="text" id="brandInput" placeholder="例如: VepoHongKong">
-                        <button id="goBtn" class="primary-btn" type="button">套用焦點</button>
-                    </div>
-                </div>
                 <button id="refreshBtn" class="secondary-btn" type="button">重新整理</button>
             </div>
         </header>
 
         <section class="status-strip">
             <div class="status-chip">
-                <span>Focused Brand</span>
-                <strong id="currentBrandDisplay">全部廣告主</strong>
-            </div>
-            <div class="status-chip">
                 <span>View Refreshed</span>
                 <strong id="lastUpdate">等待載入</strong>
             </div>
-            <p class="status-copy">資料直接來自 Google Sheet。你可以用上方輸入框快速聚焦單一廣告主，再用左側控制台整理你想長期監視的同行組合。</p>
         </section>
 
         <section id="emptyState" class="state-panel">

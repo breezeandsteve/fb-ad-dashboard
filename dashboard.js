@@ -453,18 +453,6 @@ function showOnly(stateName, elements) {
 }
 
 function updateShellLabel(currentBrandKey) {
-  const brandLabel = currentBrandKey || '全部廣告主';
-  const currentBrandDisplay = document.getElementById('currentBrandDisplay');
-  const brandInput = document.getElementById('brandInput');
-
-  if (currentBrandDisplay) {
-    currentBrandDisplay.textContent = brandLabel;
-  }
-
-  if (brandInput) {
-    brandInput.value = currentBrandKey;
-  }
-
   document.title = currentBrandKey ? `${currentBrandKey} · Ads War Room` : `${SHEET_LABEL} · Ads War Room`;
 }
 
@@ -477,13 +465,11 @@ function setupDashboard() {
   };
 
   const refreshButton = document.getElementById('refreshBtn');
-  const goButton = document.getElementById('goBtn');
   const mainGrid = document.getElementById('mainGrid');
   const commandPanel = document.getElementById('commandPanel');
   const sidebarToggleButton = document.getElementById('sidebarToggleBtn');
   const sidebarToggleIcon = document.getElementById('sidebarToggleIcon');
   const sidebarToggleLabel = document.getElementById('sidebarToggleLabel');
-  const brandInput = document.getElementById('brandInput');
   const brandFilter = document.getElementById('brandFilter');
   const typeFilter = document.getElementById('typeFilter');
   const searchInput = document.getElementById('searchInput');
@@ -659,19 +645,6 @@ function setupDashboard() {
     }
   }
 
-  function switchBrand() {
-    const nextBrand = brandInput.value.trim();
-    const url = new URL(window.location.href);
-
-    if (nextBrand) {
-      url.searchParams.set('brand', nextBrand);
-    } else {
-      url.searchParams.delete('brand');
-    }
-
-    window.location.assign(url.toString());
-  }
-
   function toggleAllAds() {
     allExpanded = !allExpanded;
     document.querySelectorAll('.ad-details-wrap').forEach((panel) => {
@@ -693,12 +666,6 @@ function setupDashboard() {
     sidebarState = sidebarState === 'collapsed' ? 'expanded' : 'collapsed';
     window.localStorage.setItem(SIDEBAR_STORAGE_KEY, sidebarState);
     renderSidebarState();
-  });
-  goButton.addEventListener('click', switchBrand);
-  brandInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-      switchBrand();
-    }
   });
   brandFilter.addEventListener('change', applyFilters);
   typeFilter.addEventListener('change', applyFilters);
