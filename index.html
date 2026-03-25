@@ -681,8 +681,8 @@
         <header class="app-header">
             <div>
                 <span class="header-label">Competitive Ad Intelligence Desk</span>
-                <h1 class="header-title">Ads War Room</h1>
-                <p class="header-copy">監視 Facebook 同行廣告</p>
+                <h1 class="header-title">Facebook Ads Spy</h1>
+                <p class="header-copy">一次監視 Facebook 同行廣告</p>
             </div>
             <div class="command-cluster">
                 <button id="refreshBtn" class="secondary-btn" type="button">重新整理</button>
@@ -723,18 +723,17 @@
         <div id="mainContent" hidden>
             <section id="mainGrid" class="main-grid">
                 <aside id="commandPanel" class="command-panel">
-                    <button id="sidebarToggleBtn" class="sidebar-toggle" type="button" aria-expanded="true" title="收起篩選側欄">
+                    <button id="sidebarToggleBtn" class="sidebar-toggle" type="button" aria-expanded="true" title="收起">
                         <span id="sidebarToggleIcon" class="sidebar-toggle-icon" aria-hidden="true">‹</span>
-                        <span id="sidebarToggleLabel" class="sidebar-toggle-label">收起篩選側欄</span>
+                        <span id="sidebarToggleLabel" class="sidebar-toggle-label">收起</span>
                     </button>
                     <div class="command-panel-content">
                         <div class="panel-header">
                             <div>
                                 <span class="panel-label">Command Filters</span>
-                                <h2 class="panel-title">控制台面板</h2>
+                                <h2 class="panel-title">控制台</h2>
                             </div>
                         </div>
-                        <p class="panel-copy">篩選條件會即時反映在右側 feed 與圖表，方便你把多個監視對象拉成同一個觀察面。</p>
                         <div class="control-stack">
                             <select id="brandFilter" aria-label="廣告主篩選">
                                 <option value="">全部廣告主</option>
@@ -775,7 +774,6 @@
                                     <h2 class="panel-title">廣告主分佈</h2>
                                 </div>
                             </div>
-                            <p class="chart-caption">顯示廣告量最高的前幾個廣告主。</p>
                             <div class="chart-shell"><canvas id="brandChart"></canvas></div>
                         </section>
 
@@ -786,7 +784,6 @@
                                     <h2 class="panel-title">素材比例</h2>
                                 </div>
                             </div>
-                            <p class="chart-caption">圖片與影片素材佔比。</p>
                             <div class="chart-shell"><canvas id="typeChart"></canvas></div>
                         </section>
 
@@ -797,14 +794,12 @@
                                     <h2 class="panel-title">CTA 分佈</h2>
                                 </div>
                             </div>
-                            <p class="chart-caption">快速看同行主要CTA行動導向。</p>
                             <div class="chart-shell"><canvas id="ctaChart"></canvas></div>
                         </section>
                     </section>
                     <div class="feed-header">
                         <div>
                             <span class="panel-label">Creative Feed</span>
-                            <h2 class="panel-title">廣告情報流</h2>
                         </div>
                         <p id="resultCount" class="feed-meta">0 / 0 creatives in view</p>
                     </div>
