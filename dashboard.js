@@ -334,6 +334,8 @@ function updateCharts(stats, chartState) {
   const ctaEntries = Object.entries(stats.ctas)
     .sort((left, right) => right[1] - left[1])
     .slice(0, 6);
+  const chartTextColor = '#52525b';
+  const chartGridColor = '#e4e4e7';
 
   chartState.brand = new Chart(brandChartNode, {
     type: 'bar',
@@ -342,7 +344,7 @@ function updateCharts(stats, chartState) {
       datasets: [
         {
           data: brandEntries.map(([, value]) => value),
-          backgroundColor: 'rgba(94, 234, 212, 0.78)',
+          backgroundColor: '#18181b',
           borderRadius: 10,
           maxBarThickness: 18,
         },
@@ -359,15 +361,19 @@ function updateCharts(stats, chartState) {
         x: {
           beginAtZero: true,
           grid: {
-            color: 'rgba(148, 163, 184, 0.12)',
+            color: chartGridColor,
           },
           ticks: {
             precision: 0,
+            color: chartTextColor,
           },
         },
         y: {
           grid: {
             display: false,
+          },
+          ticks: {
+            color: chartTextColor,
           },
         },
       },
@@ -381,7 +387,7 @@ function updateCharts(stats, chartState) {
       datasets: [
         {
           data: [stats.imageAds, stats.videoAds],
-          backgroundColor: ['rgba(125, 211, 252, 0.9)', 'rgba(94, 234, 212, 0.9)'],
+          backgroundColor: ['#18181b', '#d4d4d8'],
           borderWidth: 0,
         },
       ],
@@ -396,6 +402,7 @@ function updateCharts(stats, chartState) {
           labels: {
             usePointStyle: true,
             padding: 18,
+            color: chartTextColor,
           },
         },
       },
@@ -409,7 +416,7 @@ function updateCharts(stats, chartState) {
       datasets: [
         {
           data: ctaEntries.map(([, value]) => value),
-          backgroundColor: 'rgba(125, 211, 252, 0.78)',
+          backgroundColor: '#71717a',
           borderRadius: 10,
           maxBarThickness: 18,
         },
@@ -426,15 +433,19 @@ function updateCharts(stats, chartState) {
         x: {
           beginAtZero: true,
           grid: {
-            color: 'rgba(148, 163, 184, 0.12)',
+            color: chartGridColor,
           },
           ticks: {
             precision: 0,
+            color: chartTextColor,
           },
         },
         y: {
           grid: {
             display: false,
+          },
+          ticks: {
+            color: chartTextColor,
           },
         },
       },
@@ -453,7 +464,7 @@ function showOnly(stateName, elements) {
 }
 
 function updateShellLabel(currentBrandKey) {
-  document.title = currentBrandKey ? `${currentBrandKey} · Ads War Room` : `${SHEET_LABEL} · Ads War Room`;
+  document.title = currentBrandKey ? `${currentBrandKey} · Facebook Ads Spy` : `${SHEET_LABEL} · Facebook Ads Spy`;
 }
 
 function setupDashboard() {

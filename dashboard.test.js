@@ -124,3 +124,11 @@ test('index keeps only the refresh status UI from the top control strip', () => 
   assert.doesNotMatch(html, /id="currentBrandDisplay"/);
   assert.match(html, /id="lastUpdate"/);
 });
+
+test('index uses the Buuluu light visual system', () => {
+  const html = readFileSync(new URL('./index.html', import.meta.url), 'utf8');
+
+  assert.match(html, /Noto\+Sans\+HK/);
+  assert.match(html, /color-scheme:\s*light/);
+  assert.match(html, /--bg:\s*#ffffff/);
+});
