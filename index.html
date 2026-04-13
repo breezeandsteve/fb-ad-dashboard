@@ -397,9 +397,52 @@
             gap: 12px;
         }
 
+        .source-switcher {
+            display: grid;
+            gap: 10px;
+            padding: 14px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+            background: #ffffff;
+        }
+
+        .source-label {
+            font-size: 0.86rem;
+            color: var(--muted);
+        }
+
+        .source-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .source-apply-btn {
+            width: auto;
+            white-space: nowrap;
+            padding-inline: 18px;
+        }
+
+        .source-status {
+            margin: 0;
+            min-height: 1.3em;
+            font-size: 0.86rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .source-status.is-error {
+            color: #b91c1c;
+        }
+
         .command-panel .subtle-btn,
         .command-panel .secondary-btn {
             width: 100%;
+        }
+
+        .command-panel .source-apply-btn {
+            width: auto;
         }
 
         .feed-panel {
@@ -733,6 +776,14 @@
                             </div>
                         </div>
                         <div class="control-stack">
+                            <div class="source-switcher">
+                                <label class="source-label" for="sourceInput">資料源代號</label>
+                                <div class="source-row">
+                                    <input type="text" id="sourceInput" placeholder="例如：CG" autocomplete="off" spellcheck="false">
+                                    <button id="sourceApplyBtn" class="secondary-btn source-apply-btn" type="button">切換</button>
+                                </div>
+                                <p id="sourceStatus" class="source-status" hidden></p>
+                            </div>
                             <select id="brandFilter" aria-label="廣告主篩選">
                                 <option value="">全部廣告主</option>
                             </select>

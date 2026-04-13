@@ -8,16 +8,26 @@ import {
   extractSheetPayload,
   formatAdsFromSheetRows,
   highlightText,
+  resolveSheetSource,
   shouldCollapseSidebar,
 } from './dashboard.js';
 
 test('buildSheetUrl points to the configured Google Sheet gviz endpoint', () => {
-  const url = buildSheetUrl();
+  const url = buildSheetUrl(resolveSheetSource('CG'));
 
   assert.equal(
     url,
     'https://docs.google.com/spreadsheets/d/1NzSHaQe6puchCA1B-tU2-4VLR1_gHlOQCiCuV9DIltk/gviz/tq?tqx=out:json&sheet=Sheet1',
   );
+});
+
+test('resolveSheetSource matches hardcoded source codes case-insensitively', () => {
+  assert.equal(resolveSheetSource('cg')?.sheetId, '1NzSHaQe6puchCA1B-tU2-4VLR1_gHlOQCiCuV9DIltk');
+  assert.equal(resolveSheetSource('CH')?.sheetId, '1_Ni_mQ4xVJRZ86q5y75KTgtFBhxi45tHM2YeDYGf2dA');
+});
+
+test('resolveSheetSource returns null for unknown source codes', () => {
+  assert.equal(resolveSheetSource('unknown'), null);
 });
 
 test('extractSheetPayload parses Google Visualization responses', () => {
@@ -131,4 +141,12 @@ test('index uses the Buuluu light visual system', () => {
   assert.match(html, /Noto\+Sans\+HK/);
   assert.match(html, /color-scheme:\s*light/);
   assert.match(html, /--bg:\s*#ffffff/);
+});
+
+test('index includes the sidebar source switcher controls', () => {
+  const html = readFileSync(new URL('./index.html', import.meta.url), 'utf8');
+
+  assert.match(html, /id="sourceInput"/);
+  assert.match(html, /id="sourceApplyBtn"/);
+  assert.match(html, /id="sourceStatus"/);
 });
