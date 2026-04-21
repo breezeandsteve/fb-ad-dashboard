@@ -24,6 +24,7 @@ test('buildSheetUrl points to the configured Google Sheet gviz endpoint', () => 
 test('resolveSheetSource matches hardcoded source codes case-insensitively', () => {
   assert.equal(resolveSheetSource('cg')?.sheetId, '1NzSHaQe6puchCA1B-tU2-4VLR1_gHlOQCiCuV9DIltk');
   assert.equal(resolveSheetSource('CH')?.sheetId, '1_Ni_mQ4xVJRZ86q5y75KTgtFBhxi45tHM2YeDYGf2dA');
+  assert.equal(resolveSheetSource('kenny')?.sheetId, '1tJbCPvzak9eJjvh7qWHoX0akPMK71PpM__CousYkmwY');
 });
 
 test('resolveSheetSource returns null for unknown source codes', () => {

@@ -13,6 +13,12 @@ const SHEET_SOURCES = {
     sheetId: '1_Ni_mQ4xVJRZ86q5y75KTgtFBhxi45tHM2YeDYGf2dA',
     sheetName: DEFAULT_SHEET_NAME,
   },
+  KENNY: {
+    code: 'KENNY',
+    label: 'KENNY FB SPY',
+    sheetId: '1tJbCPvzak9eJjvh7qWHoX0akPMK71PpM__CousYkmwY',
+    sheetName: DEFAULT_SHEET_NAME,
+  },
 };
 const ADS_PER_PAGE = 12;
 const SIDEBAR_STORAGE_KEY = 'ads-war-room-sidebar';
