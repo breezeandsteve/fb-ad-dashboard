@@ -519,6 +519,7 @@ function setupDashboard() {
   const sourceInput = document.getElementById('sourceInput');
   const sourceApplyButton = document.getElementById('sourceApplyBtn');
   const sourceStatus = document.getElementById('sourceStatus');
+  const feedPanel = document.getElementById('feedPanel');
   const brandFilter = document.getElementById('brandFilter');
   const typeFilter = document.getElementById('typeFilter');
   const searchInput = document.getElementById('searchInput');
@@ -654,10 +655,17 @@ function setupDashboard() {
     showOnly('error', elements);
   }
 
+  function showSourceEntryState() {
+    showOnly('content', elements);
+    if (feedPanel) {
+      feedPanel.hidden = true;
+    }
+    setSourceStatus('請先輸入代號', false);
+  }
+
   async function loadData() {
     if (!activeSource) {
-      setSourceStatus('請先輸入代號', true);
-      showOnly('empty', elements);
+      showSourceEntryState();
       return;
     }
 
@@ -704,6 +712,9 @@ function setupDashboard() {
 
       applyFilters();
       showOnly('content', elements);
+      if (feedPanel) {
+        feedPanel.hidden = false;
+      }
       if (sourceInput) {
         sourceInput.value = activeSource.code;
       }
@@ -786,7 +797,7 @@ function setupDashboard() {
   });
   window.addEventListener('resize', renderSidebarState);
 
-  showOnly('empty', elements);
+  showSourceEntryState();
 }
 
 if (typeof document !== 'undefined') {

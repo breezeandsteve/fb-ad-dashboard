@@ -162,3 +162,10 @@ test('index empty state asks the user to enter a source code first', () => {
 
   assert.match(html, /請先輸入資料源代號/);
 });
+
+test('index keeps the source switcher container visible on first render', () => {
+  const html = readFileSync(new URL('./index.html', import.meta.url), 'utf8');
+
+  assert.doesNotMatch(html, /id="mainContent" hidden/);
+  assert.match(html, /id="feedPanel"/);
+});
