@@ -1,4 +1,3 @@
-const DEFAULT_SOURCE_CODE = 'CG';
 const DEFAULT_SHEET_NAME = 'Sheet1';
 const SHEET_SOURCES = {
   CG: {
@@ -22,7 +21,6 @@ const SHEET_SOURCES = {
 };
 const ADS_PER_PAGE = 12;
 const SIDEBAR_STORAGE_KEY = 'ads-war-room-sidebar';
-const SOURCE_STORAGE_KEY = 'ads-war-room-source';
 const SIDEBAR_COLLAPSE_BREAKPOINT = 1120;
 
 const escapeMap = {
@@ -45,7 +43,11 @@ export function resolveSheetSource(code) {
   return SHEET_SOURCES[normalizeSourceCode(code)] || null;
 }
 
-export function buildSheetUrl(source = resolveSheetSource(DEFAULT_SOURCE_CODE)) {
+export function resolveInitialSource() {
+  return null;
+}
+
+export function buildSheetUrl(source = resolveSheetSource('CG')) {
   return `https://docs.google.com/spreadsheets/d/${source.sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(source.sheetName)}`;
 }
 
@@ -492,6 +494,11 @@ function showOnly(stateName, elements) {
 }
 
 function updateShellLabel(currentBrandKey, source) {
+  if (!source) {
+    document.title = currentBrandKey ? `${currentBrandKey} · Facebook Ads Spy` : 'Facebook Ads Spy';
+    return;
+  }
+
   document.title = currentBrandKey ? `${currentBrandKey} · Facebook Ads Spy` : `${source.label} · Facebook Ads Spy`;
 }
 
@@ -530,7 +537,7 @@ function setupDashboard() {
   let currentPage = 1;
   let allExpanded = false;
   let currentBrandKey = new URLSearchParams(window.location.search).get('brand')?.trim() || '';
-  let activeSource = resolveSheetSource(window.localStorage.getItem(SOURCE_STORAGE_KEY)) || resolveSheetSource(DEFAULT_SOURCE_CODE);
+  let activeSource = resolveInitialSource();
   let sidebarState = window.localStorage.getItem(SIDEBAR_STORAGE_KEY) || 'expanded';
 
   function setSourceStatus(message = '', isError = false) {
@@ -648,6 +655,12 @@ function setupDashboard() {
   }
 
   async function loadData() {
+    if (!activeSource) {
+      setSourceStatus('請先輸入代號', true);
+      showOnly('empty', elements);
+      return;
+    }
+
     refreshButton.disabled = true;
     if (sourceApplyButton) {
       sourceApplyButton.disabled = true;
@@ -691,7 +704,6 @@ function setupDashboard() {
 
       applyFilters();
       showOnly('content', elements);
-      window.localStorage.setItem(SOURCE_STORAGE_KEY, activeSource.code);
       if (sourceInput) {
         sourceInput.value = activeSource.code;
       }
@@ -741,7 +753,7 @@ function setupDashboard() {
   renderSidebarState();
 
   if (sourceInput) {
-    sourceInput.value = activeSource.code;
+    sourceInput.value = '';
   }
 
   refreshButton.addEventListener('click', () => {
@@ -774,7 +786,7 @@ function setupDashboard() {
   });
   window.addEventListener('resize', renderSidebarState);
 
-  loadData();
+  showOnly('empty', elements);
 }
 
 if (typeof document !== 'undefined') {

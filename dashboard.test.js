@@ -8,6 +8,7 @@ import {
   extractSheetPayload,
   formatAdsFromSheetRows,
   highlightText,
+  resolveInitialSource,
   resolveSheetSource,
   shouldCollapseSidebar,
 } from './dashboard.js';
@@ -29,6 +30,10 @@ test('resolveSheetSource matches hardcoded source codes case-insensitively', () 
 
 test('resolveSheetSource returns null for unknown source codes', () => {
   assert.equal(resolveSheetSource('unknown'), null);
+});
+
+test('resolveInitialSource starts with no active sheet source', () => {
+  assert.equal(resolveInitialSource(), null);
 });
 
 test('extractSheetPayload parses Google Visualization responses', () => {
@@ -150,4 +155,10 @@ test('index includes the sidebar source switcher controls', () => {
   assert.match(html, /id="sourceInput"/);
   assert.match(html, /id="sourceApplyBtn"/);
   assert.match(html, /id="sourceStatus"/);
+});
+
+test('index empty state asks the user to enter a source code first', () => {
+  const html = readFileSync(new URL('./index.html', import.meta.url), 'utf8');
+
+  assert.match(html, /請先輸入資料源代號/);
 });
