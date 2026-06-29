@@ -1,22 +1,15 @@
-const DEFAULT_SHEET_NAME = 'Sheet1';
 const SHEET_SOURCES = {
   CG: {
     code: 'CG',
     label: 'CG FB SPY',
-    sheetId: '1NzSHaQe6puchCA1B-tU2-4VLR1_gHlOQCiCuV9DIltk',
-    sheetName: DEFAULT_SHEET_NAME,
   },
   CH: {
     code: 'CH',
     label: 'CH FB SPY',
-    sheetId: '1_Ni_mQ4xVJRZ86q5y75KTgtFBhxi45tHM2YeDYGf2dA',
-    sheetName: DEFAULT_SHEET_NAME,
   },
   KENNY: {
     code: 'KENNY',
     label: 'KENNY FB SPY',
-    sheetId: '1tJbCPvzak9eJjvh7qWHoX0akPMK71PpM__CousYkmwY',
-    sheetName: DEFAULT_SHEET_NAME,
   },
 };
 const ADS_PER_PAGE = 12;
@@ -47,8 +40,8 @@ export function resolveInitialSource() {
   return null;
 }
 
-export function buildSheetUrl(source = resolveSheetSource('CG')) {
-  return `https://docs.google.com/spreadsheets/d/${source.sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(source.sheetName)}`;
+export function buildAdsApiUrl(source = resolveSheetSource('CG')) {
+  return `/api/ads?source=${encodeURIComponent(source.code)}`;
 }
 
 function escapeRegExp(value) {
@@ -676,11 +669,11 @@ function setupDashboard() {
     showOnly('loading', elements);
 
     try {
-      const response = await fetch(buildSheetUrl(activeSource));
+      const response = await fetch(buildAdsApiUrl(activeSource));
       const bodyText = await response.text();
 
       if (!response.ok) {
-        let message = 'Google Sheet 目前無法讀取';
+        let message = '資料目前無法讀取';
         try {
           const errorPayload = JSON.parse(bodyText);
           message = errorPayload.error || message;

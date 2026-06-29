@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  buildSheetUrl,
+  buildAdsApiUrl,
   computeStats,
   extractSheetPayload,
   formatAdsFromSheetRows,
@@ -12,20 +12,30 @@ import {
   resolveSheetSource,
   shouldCollapseSidebar,
 } from './dashboard.js';
+import {
+  buildSheetUrl,
+  resolveProxySource,
+} from './functions/api/ads.js';
 
-test('buildSheetUrl points to the configured Google Sheet gviz endpoint', () => {
-  const url = buildSheetUrl(resolveSheetSource('CG'));
+test('buildAdsApiUrl points the browser to the controlled proxy endpoint', () => {
+  const url = buildAdsApiUrl(resolveSheetSource('CG'));
 
-  assert.equal(
-    url,
-    'https://docs.google.com/spreadsheets/d/1NzSHaQe6puchCA1B-tU2-4VLR1_gHlOQCiCuV9DIltk/gviz/tq?tqx=out:json&sheet=Sheet1',
-  );
+  assert.equal(url, '/api/ads?source=CG');
 });
 
-test('resolveSheetSource matches hardcoded source codes case-insensitively', () => {
-  assert.equal(resolveSheetSource('cg')?.sheetId, '1NzSHaQe6puchCA1B-tU2-4VLR1_gHlOQCiCuV9DIltk');
-  assert.equal(resolveSheetSource('CH')?.sheetId, '1_Ni_mQ4xVJRZ86q5y75KTgtFBhxi45tHM2YeDYGf2dA');
-  assert.equal(resolveSheetSource('kenny')?.sheetId, '1tJbCPvzak9eJjvh7qWHoX0akPMK71PpM__CousYkmwY');
+test('resolveSheetSource matches public source codes case-insensitively without exposing sheet IDs', () => {
+  assert.deepEqual(resolveSheetSource('cg'), {
+    code: 'CG',
+    label: 'CG FB SPY',
+  });
+  assert.deepEqual(resolveSheetSource('CH'), {
+    code: 'CH',
+    label: 'CH FB SPY',
+  });
+  assert.deepEqual(resolveSheetSource('kenny'), {
+    code: 'KENNY',
+    label: 'KENNY FB SPY',
+  });
 });
 
 test('resolveSheetSource returns null for unknown source codes', () => {
@@ -34,6 +44,45 @@ test('resolveSheetSource returns null for unknown source codes', () => {
 
 test('resolveInitialSource starts with no active sheet source', () => {
   assert.equal(resolveInitialSource(), null);
+});
+
+test('dashboard code does not expose Google Sheet IDs or direct Google Sheet URLs', () => {
+  const script = readFileSync(new URL('./dashboard.js', import.meta.url), 'utf8');
+
+  assert.doesNotMatch(script, /docs\.google\.com\/spreadsheets/);
+  assert.doesNotMatch(script, /[a-zA-Z0-9_-]{30,}/);
+});
+
+test('worker proxy resolves sheet sources from server-side environment only', () => {
+  const env = {
+    ADSPY_SOURCES_JSON: JSON.stringify({
+      CG: {
+        label: 'CG FB SPY',
+        sheetId: 'server-only-sheet-id',
+        sheetName: 'Sheet1',
+      },
+    }),
+  };
+
+  assert.deepEqual(resolveProxySource('cg', env), {
+    code: 'CG',
+    label: 'CG FB SPY',
+    sheetId: 'server-only-sheet-id',
+    sheetName: 'Sheet1',
+  });
+  assert.equal(resolveProxySource('missing', env), null);
+});
+
+test('worker proxy builds the Google Sheet URL server-side', () => {
+  const source = {
+    sheetId: 'server-only-sheet-id',
+    sheetName: 'Sheet 1',
+  };
+
+  assert.equal(
+    buildSheetUrl(source),
+    'https://docs.google.com/spreadsheets/d/server-only-sheet-id/gviz/tq?tqx=out:json&sheet=Sheet%201',
+  );
 });
 
 test('extractSheetPayload parses Google Visualization responses', () => {
@@ -134,6 +183,14 @@ test('index and static deployment files opt out of public indexing', () => {
   assert.match(html, /<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">/);
   assert.match(headers, /X-Robots-Tag: noindex, nofollow, noarchive, nosnippet/);
   assert.match(robots, /Disallow: \//);
+});
+
+test('worker routes API requests and keeps static responses out of search indexes', () => {
+  const worker = readFileSync(new URL('./_worker.js', import.meta.url), 'utf8');
+
+  assert.match(worker, /pathname === '\/api\/ads'/);
+  assert.match(worker, /env\.ASSETS\.fetch/);
+  assert.match(worker, /X-Robots-Tag/);
 });
 
 test('shouldCollapseSidebar only collapses on desktop when stored state is collapsed', () => {
