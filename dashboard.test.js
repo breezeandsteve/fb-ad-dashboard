@@ -126,6 +126,16 @@ test('index places the chart KPI block before the creative feed list', () => {
   assert.ok(chartIndex < feedIndex);
 });
 
+test('index and static deployment files opt out of public indexing', () => {
+  const html = readFileSync(new URL('./index.html', import.meta.url), 'utf8');
+  const headers = readFileSync(new URL('./_headers', import.meta.url), 'utf8');
+  const robots = readFileSync(new URL('./robots.txt', import.meta.url), 'utf8');
+
+  assert.match(html, /<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">/);
+  assert.match(headers, /X-Robots-Tag: noindex, nofollow, noarchive, nosnippet/);
+  assert.match(robots, /Disallow: \//);
+});
+
 test('shouldCollapseSidebar only collapses on desktop when stored state is collapsed', () => {
   assert.equal(shouldCollapseSidebar('collapsed', 1440), true);
   assert.equal(shouldCollapseSidebar('expanded', 1440), false);
